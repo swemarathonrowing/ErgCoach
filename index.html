@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ErgCoach">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Erg Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ultra&family=Josefin+Sans:wght@300;400;600;700&family=Chivo+Mono:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+
+  :root{
+    --paper:#ffffff;
+    --ink:#2e2e2e;
+    --ink-mid:#757575;
+    --line:#2e2e2e;
+    --soft:#e8e8e8;
+    --bad:#b00020;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
+    overscroll-behavior:none; -webkit-user-select:none; user-select:none; }
+  .mono{ font-family:'Chivo Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace; }
+  .hidden{ display:none !important; }
+
+  button{ border:2px solid var(--line); border-radius:8px; font-size:12px; font-weight:700; letter-spacing:0.5px;
+    text-transform:uppercase; font-family:inherit; color:var(--ink); background:var(--paper); padding:12px 10px; cursor:pointer;
+    -webkit-appearance:none; appearance:none; }
+  button:active{ background:#eee; }
+  button.solid{ background:var(--ink); color:var(--paper); }
+  button.solid:active{ background:#000; }
+
+  /* ---------- permission gate ---------- */
+  #gate{ position:fixed; inset:0; background:var(--paper); z-index:50; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:28px; padding:30px 34px; }
+  #gate .copy{ max-width:300px; width:100%; }
+  #gate .logoWrap{ height:54px; width:auto; display:block; }
+  #gate .oar{ font-size:11px; color:var(--ink-mid); letter-spacing:3px; text-transform:uppercase; margin:10px 0 9px; font-weight:300; }
+  #gate p{ color:var(--ink-mid); font-size:12px; line-height:1.5; margin:0; font-weight:300; }
+  #gate p.madeBy{ margin-top:14px; font-size:11px; letter-spacing:0.5px; text-transform:uppercase; }
+  #gate .actions{ display:flex; flex-direction:column; gap:9px; width:100%; max-width:300px; }
+  #gate .skip{ border:none; background:transparent; color:var(--ink-mid); font-size:11px; text-decoration:underline;
+    text-transform:none; letter-spacing:0; font-weight:300; padding:4px; }
+
+  /* ---------- header ---------- */
+  #top{ position:sticky; top:0; z-index:10; background:var(--paper); border-bottom:2px solid var(--line);
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px; display:flex; align-items:center; gap:12px; }
+  #brandBtn{ width:46px; height:46px; border-radius:14px; padding:7px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+  #brandBtn svg{ width:100%; height:100%; }
+  #top .ttl{ flex:1; }
+  #top .ttl .name{ font-size:12px; letter-spacing:2.5px; text-transform:uppercase; font-weight:700; }
+  #top .ttl .state{ font-size:11px; letter-spacing:1px; text-transform:uppercase; font-weight:300; color:var(--ink-mid); margin-top:3px; }
+  .dot{ display:inline-block; width:8px; height:8px; border-radius:50%; border:2px solid var(--ink); margin-right:6px; vertical-align:-1px; }
+  .dot.on{ background:var(--ink); }
+
+  /* ---------- setup strip ---------- */
+  #setup{ padding:12px 16px 4px; }
+  .segRow{ display:flex; gap:8px; margin-bottom:8px; }
+  .seg{ display:flex; gap:6px; flex:1; }
+  .seg button, .tabBtn{ flex:1; padding:8px 6px; font-size:11px; letter-spacing:1px; }
+  .seg button.active, .tabBtn.active{ background:var(--ink); color:var(--paper); }
+  .seats{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .seats button{ flex:0 0 auto; padding:8px 12px; font-size:11px; letter-spacing:1px; }
+  .seats button.active{ background:var(--ink); color:var(--paper); }
+  .smallLbl{ font-size:11px; letter-spacing:2px; text-transform:uppercase; font-weight:300; color:var(--ink-mid); margin:4px 0 6px; }
+
+  main{ padding:0 16px calc(84px + env(safe-area-inset-bottom)); }
+
+  /* ---------- panels ---------- */
+  .panel{ border:2px solid var(--line); border-radius:12px; padding:14px; margin:12px 0; }
+  .panel h2{ font-size:11px; font-weight:300; letter-spacing:2.5px; text-transform:uppercase; margin:0 0 10px; color:var(--ink); }
+  .hint{ color:var(--ink-mid); font-size:12px; line-height:1.55; margin:8px 0 0; font-weight:300; }
+  .hint b{ color:var(--ink); font-weight:700; }
+
+  .readout{ text-align:center; padding:4px 0 2px; }
+  .readout .lbl{ font-size:12px; letter-spacing:2.5px; text-transform:uppercase; font-weight:300; margin-bottom:4px; }
+  .readout .v{ font-weight:900; line-height:1; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:clamp(56px, 20vw, 88px); cursor:pointer; }
+  .readout .v.held{ text-decoration:underline; text-decoration-thickness:4px; text-underline-offset:8px; }
+  .readout .u{ font-size:12px; letter-spacing:1.5px; text-transform:uppercase; margin-top:8px; font-weight:300; min-height:18px; }
+  .readout .v2{ font-weight:900; font-size:44px; line-height:1; margin-top:14px; font-variant-numeric:tabular-nums; }
+
+  .btnRow{ display:flex; gap:8px; margin-top:10px; }
+  .btnRow button{ flex:1; }
+
+  .gauge{ display:block; width:100%; max-width:360px; margin:0 auto; }
+
+  .kv{ display:grid; grid-template-columns:1fr auto; gap:0; font-size:12px; }
+  .kv > div{ padding:8px 0; border-bottom:1px solid #ddd; }
+  .kv > div:nth-child(even){ text-align:right; font-weight:700; font-variant-numeric:tabular-nums; padding-left:10px; }
+  .kv > div:nth-last-child(-n+2){ border-bottom:0; }
+  .kv .big{ font-size:26px; font-weight:900; }
+
+  .tag{ display:inline-block; border:2px solid var(--ink); border-radius:6px; padding:1px 6px; font-size:10px; font-weight:700; letter-spacing:1px; margin-left:6px; vertical-align:1px; }
+  .tag.ok{ background:var(--ink); color:var(--paper); }
+  .tag.off{ border-color:var(--bad); color:var(--bad); }
+
+  .field{ display:flex; align-items:center; justify-content:space-between; gap:8px; border-bottom:1px solid #ddd; padding:9px 0; font-size:12px; }
+  .field:last-child{ border-bottom:0; }
+  .field .fl{ flex:1; }
+  .field .fl small{ display:block; color:var(--ink-mid); font-weight:300; font-size:11px; margin-top:2px; }
+  .field .fu{ width:22px; color:var(--ink-mid); font-weight:300; }
+  input[type=number], input[type=text], select{ font-family:inherit; font-size:14px; font-weight:700; color:var(--ink); background:var(--paper);
+    border:2px solid var(--line); border-radius:6px; padding:6px 8px; -webkit-user-select:text; user-select:text; }
+  input[type=number]{ width:84px; text-align:center; }
+  input[type=text]{ width:100%; }
+  select{ max-width:200px; -webkit-appearance:none; appearance:none; padding-right:22px;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%232e2e2e' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 8px center; }
+  textarea{ width:100%; min-height:110px; font-family:inherit; font-size:11px; border:2px solid var(--line); border-radius:8px; padding:8px; color:var(--ink); -webkit-user-select:text; user-select:text; }
+
+  table{ width:100%; border-collapse:collapse; font-size:11px; font-variant-numeric:tabular-nums; }
+  th,td{ padding:6px 5px; border-bottom:1px solid #ddd; text-align:right; white-space:nowrap; }
+  th{ font-weight:300; letter-spacing:1px; text-transform:uppercase; font-size:10px; border-bottom:2px solid var(--line); }
+  th:first-child, td:first-child{ text-align:left; }
+  td.off{ color:var(--bad); font-weight:700; }
+  td.ok{ font-weight:700; }
+  .tblWrap{ overflow-x:auto; }
+
+  
+  /* ---------- ErgCoach ---------- */
+  button{ min-height:48px; font-size:13px; padding:14px 12px; }
+  .seg button{ min-height:46px; font-size:12px; padding:10px 6px; }
+  .btnRow{ gap:10px; }
+  .field{ padding:10px 0; font-size:14px; min-height:52px; }
+  input[type=number], input[type=text], select{ font-size:16px; min-height:46px; padding:8px 10px; border-radius:8px; }
+  input[type=number]{ width:96px; }
+  input[type=range]{ width:100%; accent-color:#2e2e2e; }
+  main{ padding:0 16px calc(104px + env(safe-area-inset-bottom)); }
+  #brandBtn{ min-height:0; }
+
+  #tabs{ position:fixed; left:0; right:0; bottom:0; z-index:20; background:var(--paper); border-top:2px solid var(--line);
+    display:flex; padding:8px 6px calc(10px + env(safe-area-inset-bottom)); }
+  #tabs button{ flex:1; border:0; background:transparent; min-height:56px; padding:4px 0; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; font-weight:300; letter-spacing:1px; }
+  #tabs button svg{ width:24px; height:24px; }
+  #tabs button.active{ font-weight:900; }
+  #tabs button.active svg{ background:var(--soft); border-radius:8px; outline:3px solid var(--soft); }
+
+  .big3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; text-align:center; }
+  .big3 > div{ padding:6px 0; border-right:1px solid #ddd; }
+  .big3 > div:last-child{ border-right:0; }
+  .big3 .v{ font-weight:900; font-size:clamp(28px, 9vw, 40px); line-height:1.05; font-variant-numeric:tabular-nums; }
+  .big3 .l{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:300; color:var(--ink-mid); margin-top:4px; }
+  .paceBig{ text-align:center; font-weight:900; font-size:clamp(64px, 22vw, 96px); line-height:1; font-variant-numeric:tabular-nums; margin:6px 0 2px; }
+  .paceLbl{ text-align:center; font-size:12px; letter-spacing:2.5px; text-transform:uppercase; font-weight:300; }
+  .chart{ display:block; width:100%; height:auto; border:2px solid var(--line); border-radius:12px; background:#fff; }
+  .legend{ display:flex; flex-wrap:wrap; gap:12px; font-size:11px; color:var(--ink-mid); margin-top:8px; }
+  .legend i{ display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:5px; background:#2e2e2e; }
+  .chips{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .chip{ border:2px solid var(--line); border-radius:10px; padding:8px 10px; }
+  .chip .cv{ font-size:20px; font-weight:900; font-variant-numeric:tabular-nums; }
+  .chip .cl{ font-size:11px; color:var(--ink-mid); margin-top:2px; }
+  .chip.warn{ border-color:#FD08FF; }
+  .score{ display:flex; align-items:center; gap:14px; }
+  .score .sv{ font-size:56px; font-weight:900; line-height:1; }
+  .score .st{ font-size:12px; color:var(--ink-mid); line-height:1.5; }
+  .find{ border-top:2px solid var(--line); padding:12px 0 4px; }
+  .find:first-of-type{ border-top:0; }
+  .find h3{ margin:0 0 4px; font-size:15px; font-weight:900; }
+  .find .sev{ display:inline-block; font-size:10px; letter-spacing:1px; text-transform:uppercase; border:1.5px solid var(--ink); border-radius:5px; padding:1px 5px; margin-left:6px; vertical-align:2px; font-weight:700; }
+  .find .sev.hi{ border-color:#FD08FF; color:#FD08FF; }
+  .find p{ font-size:13px; line-height:1.55; margin:4px 0; color:var(--ink); font-weight:300; }
+  .find .drill{ font-size:12px; border-left:3px solid #FD08FF; padding:4px 10px; margin:8px 0 6px; line-height:1.5; }
+  .note{ border:2px solid #FD08FF; border-radius:10px; padding:10px 12px; font-size:12px; line-height:1.55; margin:10px 0; }
+  .note b{ font-weight:900; }
+  .status{ font-size:12px; color:var(--ink-mid); margin-top:8px; min-height:18px; }
+
+  /* video */
+  .vwrap{ position:relative; width:100%; border:2px solid var(--line); border-radius:12px; overflow:hidden; background:#111; }
+  .vwrap video{ display:block; width:100%; height:auto; }
+  .vwrap canvas{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .vwrap .empty{ color:#bbb; font-size:12px; padding:60px 20px; text-align:center; line-height:1.6; }
+  .vbar{ display:flex; gap:6px; margin-top:8px; }
+  .vbar button{ flex:1; min-height:46px; padding:8px 4px; font-size:12px; }
+  .vbar button.active{ background:var(--ink); color:#fff; }
+  .prog{ height:8px; border:2px solid var(--line); border-radius:5px; margin-top:8px; overflow:hidden; }
+  .prog i{ display:block; height:100%; width:0; background:var(--ink); }
+  .scrub{ margin-top:10px; }
+  .vt{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-mid); margin-top:2px; }
+  .recDot{ display:inline-block; width:10px; height:10px; border-radius:50%; background:#d0312d; margin-right:6px; animation:blink 1s infinite; }
+  @keyframes blink{ 50%{ opacity:.2; } }
+  .sess{ border:2px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+  .sess .sT{ font-size:14px; font-weight:900; }
+  .sess .sM{ font-size:11px; color:var(--ink-mid); margin-top:3px; line-height:1.4; }
+  #toast{ position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:30;
+    background:var(--ink); color:var(--paper); border-radius:8px; padding:10px 16px; font-size:11px; font-weight:700; letter-spacing:1px;
+    text-transform:uppercase; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; }
+  #toast.show{ opacity:1; }
+  .selfRow{ display:flex; align-items:center; gap:12px; border-top:1px solid #ddd; margin-top:10px; padding-top:10px; }
+  .selfRow .sv{ font-size:34px; font-weight:900; min-width:90px; }
+  .selfRow .sl{ font-size:12px; color:#757575; } .selfRow small{ font-size:11px; }
+  .xpc{ background:#f8eed5; border:3px solid #1b130d; border-radius:16px 12px 18px 10px; box-shadow:4px 4px 0 #1b130d; padding:14px; margin:6px 0 16px; color:#1b130d; }
+  .xpc .pTop{ display:flex; justify-content:space-between; }
+  .xpc .pLv{ font-family:Ultra, Georgia, serif; font-size:26px; color:#c8352b; -webkit-text-stroke:1px #1b130d; }
+  .xpc .pRank{ font-size:12px; text-transform:uppercase; letter-spacing:1px; }
+  .xpc .pBar{ height:14px; border:2px solid #1b130d; border-radius:8px; background:#fffaf0; overflow:hidden; margin:10px 0 4px; }
+  .xpc .pBar i{ display:block; height:100%; background:#e0a526; }
+  .xpc .pbs{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:6px; }
+  .xpc .pbs div{ border:2px solid #1b130d; border-radius:8px; padding:6px 8px; background:#fffaf0; }
+  .xpc .pbs b{ font-size:16px; display:block; } .xpc .pbs small{ font-size:10px; color:#6b5a45; }
+  .xpc .badges{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .xpc .badges span{ font-size:11px; border:2px dashed #b9a98c; color:#b9a98c; border-radius:20px; padding:4px 9px; }
+  .xpc .badges span.on{ border:2px solid #1b130d; background:#e0a526; color:#1b130d; font-weight:700; box-shadow:2px 2px 0 #1b130d; }
+  /* coached workout overlay: lobby + landscape game */
+  #sess{ position:fixed; inset:0; z-index:70; background:#efe1bd; color:#1b130d; overflow:auto; font-family:'Chivo Mono',monospace; }
+  #sessX{ position:fixed; right:8px; top:8px; z-index:3; min-height:34px; padding:4px 10px; border:3px solid #1b130d; background:#f8eed5; border-radius:10px; box-shadow:2px 2px 0 #1b130d; }
+  #sessIn{ height:100%; }
+  #wkCv{ display:block; width:100vw; height:100vh; height:100dvh; }
+  #sess .turn{ display:none; }
+  @media (orientation:portrait){ #sess .turn{ display:flex; position:absolute; inset:0; align-items:center; justify-content:center; background:rgba(239,225,189,.96); font-family:Ultra, Georgia, serif; font-size:24px; text-align:center; padding:30px; } }
+  .lob{ display:grid; grid-template-columns:minmax(200px,38%) 1fr; gap:16px; padding:16px 16px 20px; min-height:100%; align-items:start; }
+  @media (orientation:portrait){ .lob{ grid-template-columns:1fr; } }
+  .lobL{ background:#f8eed5; border:3px solid #1b130d; border-radius:18px 14px 20px 12px; box-shadow:4px 4px 0 #1b130d; padding:14px; text-align:center; }
+  .lobName{ font-family:Ultra, Georgia, serif; font-size:24px; margin:4px 0 10px; }
+  .lobT{ font-family:Ultra, Georgia, serif; font-size:24px; color:#c8352b; -webkit-text-stroke:1px #1b130d; }
+  .lobS{ font-size:12px; color:#6b5a45; margin-bottom:6px; }
+  .lobPm{ margin-top:10px; font-size:12px; } .lobPm button{ min-height:36px; padding:4px 10px; }
+  #sess button{ border:3px solid #1b130d; box-shadow:2px 2px 0 #1b130d; background:#f8eed5; color:#1b130d; border-radius:12px; }
+  #sess button.big{ width:100%; min-height:56px; font-family:Ultra, Georgia, serif; font-size:20px; text-transform:none; }
+  #sess button.go{ background:#e0a526; animation:bob .6s ease-in-out infinite alternate; }
+  .lbl2{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; margin:12px 0 5px; }
+  .pk{ display:flex; flex-wrap:wrap; gap:6px; }
+  #sess .pk button{ min-height:36px; min-width:36px; padding:3px 8px; font-size:11px; box-shadow:none; border-width:2px; }
+  #sess .pk button.on{ background:#1b130d; color:#f8eed5; box-shadow:2px 2px 0 #e0a526; }
+  .pk i{ display:block; width:22px; height:22px; border-radius:50%; border:2px solid #1b130d; }
+  .crew{ display:flex; flex-wrap:wrap; gap:8px; } .crew span{ display:flex; flex-direction:column; align-items:center; font-size:10px; }
+  .hits{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:10px; } .hits span{ color:#fff; border:2px solid #1b130d; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+  #sess .sty{ font-size:13px; line-height:1.5; }
+  .hrRow{ display:flex; align-items:center; gap:12px; border-top:1px solid #ddd; margin-top:10px; padding-top:10px; }
+  .hrV{ font-size:34px; font-weight:900; font-variant-numeric:tabular-nums; }
+  .hrV small{ font-size:11px; font-weight:300; margin-left:4px; color:var(--ink-mid); }
+  .hrZ{ flex:1; border-radius:10px; padding:10px 12px; font-size:13px; font-weight:900; background:var(--soft); }
+  .liveTeam{ font-size:11px; color:var(--ink-mid); margin-top:8px; text-align:center; }
+  .zt{ width:100%; margin-top:10px; }
+  .zt td:first-child{ font-weight:900; }
+  .zt .sw{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:0; }
+  .pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+  .pad button{ font-size:24px; font-weight:900; min-height:62px; }
+  .pinDots{ display:flex; justify-content:center; gap:16px; margin:14px 0 4px; }
+  .pinDots i{ width:18px; height:18px; border-radius:50%; border:2px solid var(--ink); }
+  .pinDots i.on{ background:var(--ink); }
+  .names{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .names button{ text-transform:none; letter-spacing:0; font-size:15px; }
+  #banner{ position:fixed; inset:0; z-index:80; background:rgba(46,46,46,0.94); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:30px; text-align:center; }
+  #banner #bannerTxt{ font-size:clamp(40px, 14vw, 72px); font-weight:900; line-height:1.05; }
+  #banner #bannerTxt small{ display:block; font-size:16px; font-weight:300; margin-top:12px; letter-spacing:1px; }
+  #banner button{ background:#fff; min-width:140px; }
+  /* cartoon title card for countdowns and messages from the coach */
+  #banner{ background:#c8352b; overflow:hidden; }
+  #banner::before{ content:''; position:absolute; inset:-60%; background:repeating-conic-gradient(from 0deg, #c8352b 0 7.5deg, #e0a526 7.5deg 15deg); animation:spin 24s linear infinite; }
+  #banner::after{ content:''; position:absolute; inset:0; background:radial-gradient(circle, transparent 40%, rgba(40,25,10,.55)); pointer-events:none; }
+  #banner #bannerTxt{ position:relative; z-index:1; font-family:Ultra, Georgia, serif; font-weight:400; color:#c8352b; background:#f8eed5; border:5px solid #1b130d; border-radius:22px 16px 24px 14px; box-shadow:6px 6px 0 #1b130d; padding:22px 28px; -webkit-text-stroke:2px #1b130d; animation:bob .5s ease-in-out infinite alternate; }
+  #banner #bannerTxt small{ -webkit-text-stroke:0; color:#1b130d; font-family:'Chivo Mono',monospace; font-weight:700; }
+  #banner button{ position:relative; z-index:1; border:3px solid #1b130d; box-shadow:3px 3px 0 #1b130d; background:#f8eed5; color:#1b130d; }
+  @keyframes bob{ from{ transform:translateY(-3px) rotate(-1deg); } to{ transform:translateY(3px) rotate(1deg); } }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .bars{ display:flex; align-items:flex-end; gap:6px; height:120px; border-bottom:2px solid var(--line); margin-top:10px; }
+  .bars > div{ flex:1; display:flex; flex-direction:column-reverse; }
+  .bars span{ display:block; }
+  .barsL{ display:flex; gap:6px; font-size:10px; color:var(--ink-mid); margin-top:4px; }
+  .barsL > div{ flex:1; text-align:center; }
+  .sess .btnRow button{ min-height:44px; padding:10px 8px; font-size:12px; }
+
+  /* ===== LOW-POLY THEME (dusk palette, faceted backgrounds, flat cards, Josefin Sans) ===== */
+  :root{ --lp-ink:#3b3560; --lp-cream:#fff8ef; --lp-gold:#f7b267; --lp-rose:#ee8a7a; --lp-teal:#4fa3a5; --lp-plum:#55558f; }
+  .lpbg{ background-color:#b9a2d6 !important; background-size:cover !important; background-position:center !important; }
+
+  #sess{ color:var(--lp-cream); font-family:'Josefin Sans', sans-serif; }
+  #sessX, #sess button{ border:0 !important; box-shadow:none !important; border-radius:3px !important; background:rgba(255,246,236,.92); color:var(--lp-ink); font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.08em; }
+  #sess button.big{ font-family:'Josefin Sans', sans-serif; letter-spacing:.14em; text-transform:uppercase; }
+  #sess button.go{ background:var(--lp-gold); animation:none; }
+  #sess .pk button.on{ background:var(--lp-ink); color:var(--lp-cream); box-shadow:inset 0 -3px 0 var(--lp-gold) !important; }
+  .pk i{ border:0; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); border-radius:0; }
+  .lobL{ background:rgba(255,246,236,.95); color:var(--lp-ink); border:0; border-radius:4px; box-shadow:0 12px 34px rgba(59,53,96,.35); }
+  .lobName{ font-family:'Josefin Sans', sans-serif; font-weight:700; }
+  .lobT{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); -webkit-text-stroke:0; letter-spacing:.04em; }
+  .lobS{ color:rgba(255,246,236,.8); } .lobL .lobS{ color:#6b6680; } .lbl2{ color:rgba(255,246,236,.75); letter-spacing:.25em; }
+  .hits span{ border:0; border-radius:2px; }
+  #sess .turn{ background:rgba(59,53,96,.96) !important; font-family:'Josefin Sans', sans-serif !important; }
+  #banner{ background:#9a8cc9; } #banner::before{ display:none; } #banner::after{ background:radial-gradient(circle, transparent 50%, rgba(59,53,96,.35)); }
+  #banner #bannerTxt{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); background:transparent; border:0; box-shadow:none; -webkit-text-stroke:0; animation:none; }
+  #banner #bannerTxt small{ color:var(--lp-gold); font-family:'Josefin Sans', sans-serif; letter-spacing:.2em; text-transform:uppercase; }
+  #banner button{ border:0; box-shadow:none; border-radius:3px; background:rgba(255,246,236,.92); color:var(--lp-ink); }
+  .xpc{ background:linear-gradient(160deg,#8f84c8,#e8b0c6 70%,#f6c6b1); color:var(--lp-cream); border:0; border-radius:4px; box-shadow:0 12px 30px rgba(59,53,96,.3); }
+  .xpc .pLv{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); -webkit-text-stroke:0; }
+  .xpc .pBar{ border:0; border-radius:0; background:rgba(255,246,236,.2); } .xpc .pBar i{ background:var(--lp-gold); }
+  .xpc .hint, .xpc .smallLbl{ color:rgba(255,246,236,.8); }
+  .xpc .pbs div{ border:0; border-radius:3px; background:rgba(255,246,236,.14); } .xpc .pbs small{ color:rgba(255,246,236,.75); }
+  .xpc .badges{ gap:4px; } .xpc .badges span{ display:none; } .xpc .bdgw{ display:flex; flex-direction:column; align-items:center; width:62px; font-size:9px; text-align:center; line-height:1.2; }
+</style>
+</head>
+<body>
+
+<header id="top">
+  <button id="brandBtn" aria-label="ErgCoach">    <svg viewBox="0 0 208 132" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M56.3564 104.401C56.8042 105.671 57.363 106.97 58.0576 108.255L25.1533 131.261L25.1445 131.25C24.5513 131.66 23.5009 131.273 22.7939 130.379C22.0869 129.484 21.9903 128.432 22.5849 128.011L56.3564 104.401ZM185.409 128.011C186.003 128.432 185.907 129.484 185.2 130.379C184.493 131.273 183.443 131.66 182.85 131.25L182.84 131.261L148.605 107.325C149.256 105.997 149.769 104.664 150.169 103.375L185.409 128.011ZM196.851 0.0251582C197.028 -0.0161594 197.203 -0.00582061 197.347 0.0505488L197.382 0.0329707L197.482 0.125744C197.512 0.146888 197.539 0.170045 197.563 0.196057L197.601 0.236096L201.382 3.74781L207.844 11.0193C208.017 11.211 208.043 11.4771 207.903 11.7302C206.782 13.7479 201.402 22.8336 192.1 29.0994C182.829 35.3597 173.804 41.4342 171.763 42.8093C171.507 42.9832 171.176 43.0206 170.93 42.9031C169.053 42.0566 161.164 38.5815 157.072 39.0261L151.398 42.9929V37.9597L154.122 36.0564C155.721 34.461 164.914 25.2725 171.904 18.3728L177.35 12.9627L182.606 7.74098L182.592 7.74586C182.615 7.72517 182.64 7.70408 182.664 7.68336L182.795 7.5525L182.844 7.52809C186.228 4.59182 190.523 1.47334 196.851 0.0251582ZM10.6474 0.0505488C10.7909 -0.00563156 10.9653 -0.0161019 11.1426 0.0251582C17.4684 1.47293 21.7621 4.59052 25.1465 7.52613L25.1982 7.5525L25.3379 7.69117C25.3587 7.70936 25.3806 7.72769 25.4013 7.74586L25.3886 7.74098L30.6445 12.9627L36.0888 18.3728C43.0749 25.2681 52.2607 34.4493 53.8681 36.0535L54.7881 36.6961V41.7293L50.9228 39.0271C46.8312 38.5813 38.9403 42.0557 37.0635 42.9021C36.817 43.02 36.4858 42.9834 36.2304 42.8093C34.1889 41.4343 25.165 35.3596 15.8945 29.0994C6.59199 22.8334 1.21077 13.7475 0.0898177 11.7302C-0.0502329 11.4771 -0.0235827 11.2111 0.149388 11.0193L6.6113 3.74781L10.3867 0.241955L10.4297 0.196057C10.4539 0.169837 10.4821 0.147025 10.5117 0.125744L10.6123 0.0329707L10.6474 0.0505488Z" fill="#2e2e2e"/>
+<mask id="mask0_btn" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="60" y="47" width="87" height="81">
+<path d="M97.8084 47.6837C99.7152 47.5824 101.661 47.6521 103.571 47.6483C105.051 47.6454 106.643 47.5295 108.108 47.712C108.727 47.789 109.321 47.9629 109.869 48.2644C110.857 48.8006 111.582 49.7172 111.877 50.8014C112.207 51.971 112.084 53.2681 111.478 54.3275C110.787 55.5335 109.709 56.0934 108.414 56.4366C108.43 58.0108 108.552 59.5822 108.779 61.1401C110.308 71.5983 115.879 81.0394 124.295 87.4341C130.466 92.0766 139.09 95.3246 146.871 94.2227C146.882 95.4202 146.905 96.6263 146.81 97.82C146.517 101.519 145.271 105.224 143.079 108.232C137.479 115.918 127.388 117.018 118.779 118.796C113.887 119.806 109.779 120.687 105.854 124.059C104.822 124.991 103.958 126.046 103.201 127.209C101.638 125.114 99.8746 123.389 97.5862 122.094C94.7714 120.502 91.6618 119.824 88.5305 119.169C80.596 117.511 71.2894 116.455 65.518 110.138C61.5413 105.784 59.7683 100.054 60.0529 94.2189C60.4073 94.2729 60.7601 94.2994 61.1178 94.3192C69.8695 94.8049 78.262 91.0864 84.6758 85.2852C91.0811 79.4916 95.3764 71.1979 96.8522 62.7268C97.212 60.6619 97.3384 58.5588 97.4459 56.468C96.7755 56.2921 96.148 56.0933 95.5646 55.7018C94.5641 55.0399 93.8864 53.9893 93.6961 52.8048C93.509 51.6358 93.7765 50.3906 94.4934 49.4403C95.3116 48.3554 96.502 47.8546 97.8084 47.6837Z" fill="#1071AE"/>
+</mask>
+<g mask="url(#mask0_btn)">
+<path d="M97.8084 47.6837C99.7152 47.5824 101.661 47.6521 103.571 47.6483C105.051 47.6454 106.643 47.5295 108.108 47.712C108.727 47.789 109.321 47.9629 109.869 48.2644C110.857 48.8006 111.582 49.7172 111.877 50.8014C112.207 51.971 112.084 53.2681 111.478 54.3275C110.787 55.5335 109.709 56.0934 108.414 56.4366C108.43 58.0108 108.552 59.5822 108.779 61.1401C110.308 71.5983 115.879 81.0394 124.295 87.4341C130.466 92.0766 139.09 95.3246 146.871 94.2227C146.882 95.4202 146.905 96.6263 146.81 97.82C146.517 101.519 145.271 105.224 143.079 108.232C137.479 115.918 127.388 117.018 118.779 118.796C113.887 119.806 109.779 120.687 105.854 124.059C104.822 124.991 103.958 126.046 103.201 127.209C101.638 125.114 99.8746 123.389 97.5862 122.094C94.7714 120.502 91.6618 119.824 88.5305 119.169C80.596 117.511 71.2894 116.455 65.518 110.138C61.5413 105.784 59.7683 100.054 60.0529 94.2189C60.4073 94.2729 60.7601 94.2994 61.1178 94.3192C69.8695 94.8049 78.262 91.0864 84.6758 85.2852C91.0811 79.4916 95.3764 71.1979 96.8522 62.7268C97.212 60.6619 97.3384 58.5588 97.4459 56.468C96.7755 56.2921 96.148 56.0933 95.5646 55.7018C94.5641 55.0399 93.8864 53.9893 93.6961 52.8048C93.509 51.6358 93.7765 50.3906 94.4934 49.4403C95.3116 48.3554 96.502 47.8546 97.8084 47.6837Z" fill="#2e2e2e"/>
+</g>
+<path d="M134.769 23.125C138.749 24.4471 142.755 25.9303 146.66 27.4587L146.638 87.6228C142.64 87.5395 138.521 86.3534 134.758 85.0716L134.769 23.125Z" fill="#2e2e2e"/>
+<path d="M71.8793 23.0391L71.9617 23.1143C72.1724 24.3266 72.0016 26.7636 72.0016 28.0802L71.9993 39.6664L72.009 84.9623C68.2742 86.2195 64.2435 87.5458 60.2726 87.6083C60.0396 87.2107 60.1887 32.6106 60.1763 27.2805C61.5478 26.8564 62.9011 26.3053 64.2509 25.814L71.8793 23.0391Z" fill="#2e2e2e"/>
+<path d="M88.6853 18.4298C88.8544 18.3849 88.9211 18.386 89.0852 18.4474C89.2435 19.9858 89.1228 21.6431 89.1208 23.1967L89.1184 32.2235L89.1212 47.4774C89.1215 50.3859 89.1907 53.3146 89.0854 56.2211C88.7584 65.2521 86.1268 71.8134 79.408 78.0614L79.2044 78.1882C79.0753 77.9743 79.0843 77.7906 79.0768 77.5436C79.0193 75.6294 79.0922 73.6831 79.0922 71.7651L79.0918 58.9303L79.0887 20.4271C82.2103 19.7074 85.5112 18.8182 88.6853 18.4298Z" fill="#2e2e2e"/>
+<path d="M117.725 18.3516C120.954 18.9789 124.17 19.6738 127.37 20.4357L127.354 78.1323C126.842 77.4847 126.149 76.9262 125.565 76.3364C122.258 73.0515 119.902 68.9315 118.748 64.415C117.665 60.2178 117.71 56.0612 117.712 51.7643L117.714 42.696L117.725 18.3516Z" fill="#2e2e2e"/>
+<path d="M96.3273 18.0121L109.667 18.0078L109.654 40.1149C105.223 40.0226 100.777 40.0915 96.3436 40.104C96.177 32.8316 96.3297 25.3073 96.3273 18.0121Z" fill="#2e2e2e"/>
+<path d="M96.3517 18.0121L103.136 18.0078L103.13 40.1598C100.876 40.0673 98.6147 40.1364 96.36 40.1489C96.2752 32.8616 96.3529 25.3221 96.3517 18.0121Z" fill="#2e2e2e"/>
+</svg>
+</button>
+  <div class="ttl mono">
+    <div class="name">ErgCoach</div>
+    <div class="state" id="pmState"><span class="dot" id="pmDot"></span><span id="pmTxt">PM5 not connected</span></div>
+  </div>
+</header>
+
+<main class="mono">
+
+<!-- CONNECT -->
+<section id="v-con">
+  <div class="panel" id="teamPane"></div>
+  <div class="panel">
+    <h2>Concept2 PM5</h2>
+    <div id="btWarn"></div>
+    <div class="btnRow"><button class="solid" id="btnConnect">Connect PM5</button></div>
+    <div class="btnRow"><button id="btnDemo">Try demo rowing</button><button id="btnHr">Heart rate strap</button></div>
+    <div class="seg hidden" id="demoSeg" style="margin-top:8px;flex-wrap:wrap">
+      <button data-d="good" class="active">Good</button><button data-d="soft">Soft catch</button><button data-d="late">Late peak</button><button data-d="hump">Two humps</button><button data-d="spike">Early spike</button>
+    </div>
+    <p class="status" id="conStatus"></p>
+    <p class="hint">Wake the PM5 (press a button or take a stroke), close ErgData if it is connected, then tap <b>Connect PM5</b> and pick <b>PM5 …</b> with your serial number. The force curve comes from the PM5 itself, stroke by stroke.</p>
+  </div>
+  <div class="panel">
+    <h2>You</h2>
+    <div class="field"><div class="fl">Height</div><input type="number" id="pHgt" inputmode="decimal"><div class="fu">cm</div></div>
+    <div class="field"><div class="fl">Weight</div><input type="number" id="pWgt" inputmode="decimal"><div class="fu">kg</div></div>
+    <div class="field"><div class="fl">Sex<small>for the level bands</small></div><select id="pSex"><option value="">–</option><option value="m">Male</option><option value="f">Female</option></select></div>
+    <div class="field"><div class="fl">Year of birth<small>estimates max HR if you have not tested it</small></div><input type="number" id="pBy" inputmode="numeric"><div class="fu"></div></div>
+    <div class="field"><div class="fl">Max heart rate<small>highest you have seen in a hard test</small></div><input type="number" id="pMax" inputmode="numeric"><div class="fu">bpm</div></div>
+    <div class="field"><div class="fl">Resting heart rate<small>lying down, just after waking</small></div><input type="number" id="pRest" inputmode="numeric"><div class="fu">bpm</div></div>
+    <div id="zoneBox"></div>
+    <p class="hint">Height is used to judge drive length and to scale the video analysis to metres.</p>
+  </div>
+</section>
+
+<!-- LIVE -->
+<section id="v-live" class="hidden">
+  <div class="panel">
+    <div class="paceLbl">Pace /500 m</div>
+    <div class="paceBig" id="lPace">–:––</div>
+    <div class="big3" style="margin-top:8px">
+      <div><div class="v" id="lRate">–</div><div class="l">s/m</div></div>
+      <div><div class="v" id="lWatt">–</div><div class="l">watts</div></div>
+      <div><div class="v" id="lDist">–</div><div class="l">metres</div></div>
+    </div>
+    <div class="hrRow" id="lHrRow"><div class="hrV"><span id="lHr">–</span><small>bpm</small></div><div class="hrZ" id="lZone">no heart rate</div></div>
+    <div class="liveTeam" id="lTeam"></div>
+  </div>
+  <div class="panel">
+    <h2>Force curve · <span id="lStroke">0 strokes</span></h2>
+    <div id="lChart"></div>
+    <div class="legend"><span><i style="background:#FD08FF;height:4px"></i>last stroke</span><span><i style="background:#c8c8c8"></i>previous</span><span><i style="background:repeating-linear-gradient(90deg,#2e2e2e 0 4px,transparent 4px 7px)"></i>target shape</span></div>
+    <div class="chips" id="lChips"></div>
+  </div>
+  <div class="btnRow"><button id="btnLiveTech">Technique →</button><button id="btnSave">Stop &amp; save</button></div>
+</section>
+
+<!-- TECHNIQUE -->
+<section id="v-tech" class="hidden">
+  <div class="panel" id="techPane"></div>
+</section>
+
+<!-- VIDEO -->
+<section id="v-video" class="hidden">
+  <div class="panel">
+    <h2>Video analysis</h2>
+    <div class="vwrap" id="vwrap"><div class="empty" id="vEmpty">Film from the side, level with the seat, 3–4 m away. The whole body and the handle should be in view for the full stroke.</div><video id="vid" playsinline muted preload="auto" class="hidden"></video><canvas id="vcan"></canvas></div>
+    <div class="vbar" id="vSrcBar"><button id="vRec">● Record</button><button id="vLoad">Load video</button><input type="file" id="vFile" accept="video/*" class="hidden"></div>
+    <div class="vbar hidden" id="vRecBar"><button class="solid" id="vStop"><span class="recDot"></span>Stop</button></div>
+    <div class="hidden" id="vAnaBar"><div class="btnRow"><button class="solid" id="vAnalyse">Find joints &amp; analyse</button></div><div class="prog"><i id="vProg"></i></div></div>
+    <p class="status" id="vStatus"></p>
+    <div class="hidden" id="vPlay">
+      <input type="range" class="scrub" id="vScrub" min="0" max="1000" value="0">
+      <div class="vt"><span id="vT">0.00 s</span><span id="vPhase"></span></div>
+      <div class="vbar"><button id="vPrevC">◀ Catch</button><button id="vBack">−1</button><button id="vPP">Play</button><button id="vFwd">+1</button><button id="vNextC">Catch ▶</button></div>
+      <div class="vbar" id="vSpeed"><button data-s="0.25">¼×</button><button data-s="0.5" class="active">½×</button><button data-s="1">1×</button><button id="vOv" class="active">Lines</button></div>
+    </div>
+  </div>
+  <div class="panel hidden" id="vSyncPanel">
+    <h2>Force curve at this stroke</h2>
+    <div id="vForce"></div>
+    <div class="legend"><span><i style="background:#FD08FF;height:4px"></i>PM5 force</span><span><i style="background:#2e2e2e"></i>handle speed (video)</span></div>
+    <div class="field"><div class="fl">PM5 sync offset<small id="vSyncInfo"></small></div><input type="number" id="vOffset" step="0.1" value="0"><div class="fu">s</div></div>
+    <div class="btnRow"><button id="vAutoSync">Auto-align with PM5</button></div>
+  </div>
+  <div class="panel hidden" id="vResult"></div>
+</section>
+
+<!-- LOG -->
+<section id="v-log" class="hidden">
+  <div class="panel" id="logPane"></div>
+</section>
+
+</main>
+
+<nav id="tabs" class="mono">
+  <button data-v="con" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>PM5</button>
+  <button data-v="live"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><path d="M2 18 C6 18 7 5 11 5 S15 14 22 18"/></svg>Live</button>
+  <button data-v="tech"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Technique</button>
+  <button data-v="video"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>Video</button>
+  <button data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><path d="M5 4h14v16H5zM9 9h6M9 13h6M9 17h3"/></svg>Diary</button>
+</nav>
+
+<div id="toast" class="mono"></div>
+<div id="sess" class="hidden"><button id="sessX">✕</button><div id="sessIn"></div></div>
+<div id="banner" class="mono hidden"><div id="bannerTxt"></div><button id="bannerX">OK</button></div>
+<script src="config.js" onerror="0"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = (v, d=1) => (v==null || isNaN(v)) ? '–' : (+v).toFixed(d);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const mean = a => a.length ? a.reduce((s,x)=>s+x,0)/a.length : 0;
+const sd = a => { const m = mean(a); return Math.sqrt(mean(a.map(x=>(x-m)**2))); };
+const LBF = 4.44822;                       // PM5 reports force in pounds
+const MG = '#FD08FF', IK = '#2e2e2e';
+const fmtPace = s => (!s || !isFinite(s) || s>=600) ? '–:––' : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}.${Math.floor((s*10)%10)}`;
+const paceFromWatts = w => w>0 ? 500*Math.cbrt(2.8/w) : 0;    // Concept2 formula
+
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(toast.h); toast.h=setTimeout(()=>e.classList.remove('show'),1800); }
+
+
+const HOOKS = { stroke:[], status:[] };
+
+// ---------- team backend: Supabase when configured, otherwise a local demo backend ----------
+const CFG = Object.assign({ url:'', key:'' }, window.ERG_CFG || {}, (()=>{ try{ return JSON.parse(localStorage.getItem('ergcoach.server')||'{}'); }catch(e){ return {}; } })());
+
+const SupaAPI = {
+  kind:'supabase',
+  async rpc(fn, args){
+    const r = await fetch(`${CFG.url}/rest/v1/rpc/${fn}`, { method:'POST', headers:{ apikey:CFG.key, Authorization:'Bearer '+CFG.key, 'Content-Type':'application/json' }, body:JSON.stringify(args||{}) });
+    const txt = await r.text(); let j = null; try{ j = txt ? JSON.parse(txt) : null; }catch(e){}
+    if (!r.ok) throw new Error((j && (j.message || j.hint)) || ('Server error '+r.status));
+    return j;
+  },
+  createTeam:(name,code,pin)=>SupaAPI.rpc('create_team',{p_name:name,p_code:code,p_coach_pin:pin}),
+  roster:code=>SupaAPI.rpc('team_roster',{p_code:code}),
+  athleteLogin:async (code,id,pin)=>{ const r = await SupaAPI.rpc('athlete_login',{p_code:code,p_athlete:id,p_pin:pin}); if (r && r.error) throw new Error(r.error); return r; },
+  coachLogin:(code,pin)=>SupaAPI.rpc('coach_login',{p_code:code,p_pin:pin}),
+  myProfile:tok=>SupaAPI.rpc('my_profile',{p_token:tok}),
+  updateProfile:(tok,p)=>SupaAPI.rpc('update_profile',{p_token:tok,p}),
+  saveSession:(tok,s)=>SupaAPI.rpc('save_session',{p_token:tok,s}),
+  mySessions:(tok,full)=>SupaAPI.rpc('my_sessions',{p_token:tok,p_full:!!full}),
+  deleteSession:(tok,id)=>SupaAPI.rpc('delete_session',{p_token:tok,p_id:id}),
+  coachTeam:tok=>SupaAPI.rpc('coach_team',{p_token:tok}),
+  coachSaveAthlete:(tok,p)=>SupaAPI.rpc('coach_save_athlete',{p_token:tok,p}),
+  coachRemoveAthlete:(tok,id)=>SupaAPI.rpc('coach_remove_athlete',{p_token:tok,p_id:id}),
+  coachSessions:(tok,ids,from,full)=>SupaAPI.rpc('coach_sessions',{p_token:tok,p_athletes:ids&&ids.length?ids:null,p_from:from||null,p_full:!!full}),
+  async rt(code, onMsg){
+    if (!SupaAPI.sb){ const m = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'); SupaAPI.sb = m.createClient(CFG.url, CFG.key); }
+    const ch = SupaAPI.sb.channel('erg-'+code.toUpperCase(), { config:{ broadcast:{ self:false, ack:false } } });
+    ch.on('broadcast', { event:'m' }, ({payload}) => onMsg(payload));
+    await new Promise(res=>ch.subscribe(st=>{ if (st==='SUBSCRIBED') res(); }));
+    return { send:m=>ch.send({ type:'broadcast', event:'m', payload:m }), close:()=>SupaAPI.sb.removeChannel(ch) };
+  }
+};
+
+// Local demo backend: same calls, stored in this browser; live data between tabs via BroadcastChannel
+const LocalAPI = {
+  kind:'local', K:'ergcoach.localdb',
+  db(){ try{ return Object.assign({teams:[],athletes:[],tokens:[],sessions:[]}, JSON.parse(localStorage.getItem(this.K)||'{}')); }catch(e){ return {teams:[],athletes:[],tokens:[],sessions:[]}; } },
+  put(d){ localStorage.setItem(this.K, JSON.stringify(d)); },
+  id(){ return (crypto.randomUUID ? crypto.randomUUID() : 'x'+Math.random().toString(36).slice(2)+Date.now().toString(36)); },
+  async h(s){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('erg:'+s)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); },
+  tok(d,t){ const k = d.tokens.find(x=>x.token===t); if (!k) throw new Error('Not logged in'); return k; },
+  async createTeam(name, code, pin){ const d=this.db(); code=code.toUpperCase(); if (d.teams.some(t=>t.code===code)) throw new Error('That team code is taken'); const t={id:this.id(),name,code,coach_pin:pin ? await this.h(pin) : null}; d.teams.push(t); const token=this.id(); d.tokens.push({token,team_id:t.id,athlete_id:null}); this.put(d); return {token,team:{id:t.id,name,code}}; },
+  async roster(code){ const d=this.db(), t=d.teams.find(x=>x.code===code.toUpperCase()); if (!t) return null; return {team:{id:t.id,name:t.name,code:t.code}, athletes:d.athletes.filter(a=>a.team_id===t.id).map(a=>({id:a.id,name:a.name,has_pin:!!a.pin})).sort((a,b)=>a.name.localeCompare(b.name))}; },
+  async athleteLogin(code,id,pin){ const d=this.db(), t=d.teams.find(x=>x.code===code.toUpperCase()), a=d.athletes.find(x=>x.id===id && t && x.team_id===t.id); if (!a) throw new Error('Unknown athlete');
+    if (a.locked_until && a.locked_until>Date.now()) throw new Error('Too many wrong codes. Try again in a few minutes.');
+    if (a.pin && a.pin !== await this.h(pin||'')){ a.failed=(a.failed||0)+1; if (a.failed>=5) a.locked_until=Date.now()+600000; this.put(d); throw new Error('Wrong code'); }
+    a.failed=0; a.locked_until=null; const token=this.id(); d.tokens.push({token,team_id:t.id,athlete_id:a.id}); this.put(d); return {token,athlete:{id:a.id,name:a.name}}; },
+  async coachLogin(code,pin){ const d=this.db(), t=d.teams.find(x=>x.code===code.toUpperCase()); if (!t || (t.coach_pin && t.coach_pin!==await this.h(pin||''))) throw new Error('Wrong team code or coach PIN'); const token=this.id(); d.tokens.push({token,team_id:t.id,athlete_id:null}); this.put(d); return {token,team:{id:t.id,name:t.name,code:t.code}}; },
+  async myProfile(tok){ const d=this.db(), k=this.tok(d,tok), a=d.athletes.find(x=>x.id===k.athlete_id), t=d.teams.find(x=>x.id===k.team_id); if (!a) return null; const {pin,failed,locked_until,...p}=a; return Object.assign(p,{team:t.name,code:t.code}); },
+  async updateProfile(tok,p){ const d=this.db(), k=this.tok(d,tok), a=d.athletes.find(x=>x.id===k.athlete_id); for (const f of ['sex','birth_year','weight','height','max_hr','rest_hr']) if (p[f]!=null && p[f]!=='') a[f]=p[f]; this.put(d); },
+  async saveSession(tok,s){ const d=this.db(), k=this.tok(d,tok); if (!k.athlete_id) throw new Error('Not logged in');
+    if (s.id){ const o=d.sessions.find(x=>x.id===s.id && x.athlete_id===k.athlete_id); if (o){ for (const f of ['kind','zone','rpe','notes','distance','duration','avg_hr']) if (s[f]!==undefined) o[f]=s[f]; this.put(d); return o.id; } }
+    const o=Object.assign({}, s, {id:this.id(), team_id:k.team_id, athlete_id:k.athlete_id, started_at:s.started_at||new Date().toISOString(), kind:s.kind||'erg'}); d.sessions.push(o); this.put(d); return o.id; },
+  async mySessions(tok,full){ const d=this.db(), k=this.tok(d,tok); return d.sessions.filter(s=>s.athlete_id===k.athlete_id).sort((a,b)=>b.started_at.localeCompare(a.started_at)).map(s=>full?s:Object.assign({},s,{strokes:null})); },
+  async deleteSession(tok,id){ const d=this.db(), k=this.tok(d,tok); d.sessions=d.sessions.filter(s=>!(s.id===id && (s.athlete_id===k.athlete_id || (!k.athlete_id && s.team_id===k.team_id)))); this.put(d); },
+  async coachTeam(tok){ const d=this.db(), k=this.tok(d,tok); if (k.athlete_id) throw new Error('Coach login needed'); const t=d.teams.find(x=>x.id===k.team_id);
+    return {team:{id:t.id,name:t.name,code:t.code}, athletes:d.athletes.filter(a=>a.team_id===t.id).map(({pin,failed,locked_until,...a})=>({...a,has_pin:!!pin})).sort((a,b)=>a.name.localeCompare(b.name))}; },
+  async coachSaveAthlete(tok,p){ const d=this.db(), k=this.tok(d,tok); if (k.athlete_id) throw new Error('Coach login needed');
+    if (p.id){ const a=d.athletes.find(x=>x.id===p.id && x.team_id===k.team_id); if (!a) throw new Error('Unknown athlete'); for (const f of ['name','max_hr','rest_hr','weight','height','sex','birth_year']) if (p[f]!=null && p[f]!=='') a[f]=p[f]; if (p.pin==='none') a.pin=null; else if (p.pin) { a.pin=await this.h(p.pin); a.failed=0; a.locked_until=null; } this.put(d); return a.id; }
+    if (p.pin && !/^\d{4}$/.test(p.pin)) throw new Error('PIN must be 4 digits');
+    const a={id:this.id(),team_id:k.team_id,name:p.name,pin:p.pin ? await this.h(p.pin) : null}; for (const f of ['max_hr','rest_hr','weight','height','sex','birth_year']) if (p[f]!=null && p[f]!=='') a[f]=p[f]; d.athletes.push(a); this.put(d); return a.id; },
+  async coachRemoveAthlete(tok,id){ const d=this.db(), k=this.tok(d,tok); if (k.athlete_id) return; d.athletes=d.athletes.filter(a=>!(a.id===id && a.team_id===k.team_id)); d.sessions=d.sessions.filter(s=>s.athlete_id!==id); this.put(d); },
+  async coachSessions(tok,ids,from,full){ const d=this.db(), k=this.tok(d,tok); if (k.athlete_id) throw new Error('Coach login needed'); const names=Object.fromEntries(d.athletes.map(a=>[a.id,a.name]));
+    return d.sessions.filter(s=>s.team_id===k.team_id && (!ids||!ids.length||ids.includes(s.athlete_id)) && (!from||s.started_at>=from)).sort((a,b)=>b.started_at.localeCompare(a.started_at)).map(s=>Object.assign({},s,{name:names[s.athlete_id], strokes:full?s.strokes:null})); },
+  async rt(code, onMsg){ const bc = new BroadcastChannel('erg-'+code.toUpperCase()); bc.onmessage = e=>onMsg(e.data); return { send:m=>bc.postMessage(m), close:()=>bc.close() }; }
+};
+const TEAM_CODE = ((window.ERG_CFG && window.ERG_CFG.team) || 'ERG').toUpperCase();
+const API = (CFG.url && CFG.key) ? SupaAPI : LocalAPI;
+
+// ---------- heart rate: zones by the Karvonen (heart-rate reserve) method ----------
+const ZONES = [
+  { k:'UT2', lo:0.60, hi:0.70, col:'#9ec5e8', d:'Long, easy endurance' },
+  { k:'UT1', lo:0.70, hi:0.80, col:'#6fb46f', d:'Steady endurance' },
+  { k:'AT',  lo:0.80, hi:0.85, col:'#e6c84a', d:'Anaerobic threshold' },
+  { k:'TR',  lo:0.85, hi:0.95, col:'#e8873a', d:'Transport / VO₂max' },
+  { k:'AN',  lo:0.95, hi:1.01, col:'#d0312d', d:'Anaerobic, sprint' }
+];
+function maxHrOf(p){ if (p && p.max_hr) return +p.max_hr; if (p && p.birth_year) return Math.round(208 - 0.7*(new Date().getFullYear()-p.birth_year)); return null; }
+function hrr(p, hr){ const mx = maxHrOf(p), rs = p && +p.rest_hr; if (!mx || !rs || !hr) return null; return (hr-rs)/(mx-rs); }
+function zoneOf(p, hr){ const r = hrr(p,hr); if (r==null) return null; if (r < 0.6) return {k:'Rec', col:'#d6d6d6', d:'Recovery', r}; return Object.assign({r}, ZONES.find(z=>r>=z.lo && r<z.hi) || ZONES[4]); }
+function zoneTable(p){ const mx = maxHrOf(p), rs = +(p && p.rest_hr); if (!mx || !rs) return null; return ZONES.map(z=>({...z, from:Math.round(rs+(mx-rs)*z.lo), to:Math.round(rs+(mx-rs)*Math.min(1,z.hi))})); }
+
+// ---------- level: predicted 2 km from the best erg sessions (Paul's law: +5 s/500 m per doubling of distance) ----------
+function pred2k(sessions){
+  let best = null;
+  for (const s of sessions) if ((s.kind||'erg')==='erg' && s.distance>=500 && s.duration>0){ const pace = s.duration/(s.distance/500); const p2 = pace + 5*Math.log2(2000/s.distance); if (!best || p2<best.pace) best = {pace:p2, from:s}; }
+  return best ? { time:best.pace*4, pace:best.pace, watts:2.8/Math.pow(best.pace/500,3), from:best.from } : null;
+}
+function levelOf(t2k, sex){ if (!t2k) return null; const o = sex==='f' ? 45 : 0; const bands = [[360+o,'Elite'],[390+o,'Competitive'],[420+o,'Club'],[465+o,'Fitness'],[1e9,'Beginner']]; return bands.find(b=>t2k<b[0])[1]; }
+const fmtTime = s => !s ? '–' : `${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}.${Math.floor((s*10)%10)}`;
+
+// ---------- self-competition: personal bests, own normal, XP, levels, streaks, badges, highlights ----------
+const PB_DISTS = [500, 1000, 2000, 5000, 6000, 10000];
+const RANKS = ['Deckhand','Bow seat','Engine room','Stroke seat',"Cox's pride",'Regatta hero','River legend','Ocean crosser'];
+const xpNeed = lv => Math.round(300*Math.pow(lv,1.6));                 // XP needed to reach level lv+1 from 0
+const isErg = s => (s.kind||'erg')==='erg' && !(s.summary && s.summary.demo);
+const stdDist = d => PB_DISTS.find(x => d>=x*0.98 && d<=x*1.03);
+const median = a => { if (!a.length) return null; const b=[...a].sort((x,y)=>x-y), m=b.length>>1; return b.length%2 ? b[m] : (b[m-1]+b[m])/2; };
+const weekKey = t => { const d = new Date(t); d.setHours(0,0,0,0); d.setDate(d.getDate()-((d.getDay()+6)%7)); return d.getTime(); };
+const BADGES = {
+  first:   { t:'First strokes',  d:'Saved your first session' },
+  ten:     { t:'Regular',        d:'10 sessions' },
+  fifty:   { t:'Workhorse',      d:'50 sessions' },
+  km100:   { t:'100 km club',    d:'100 km rowed' },
+  km500:   { t:'500 km club',    d:'500 km rowed' },
+  pb:      { t:'Personal best',  d:'Beat your own best at a standard distance' },
+  smooth:  { t:'Smooth operator',d:'Technique score 90 or more' },
+  early:   { t:'Early peak',     d:'Force peak in the first 42% of the drive' },
+  streak3: { t:'Three-week streak', d:'2+ sessions a week, three weeks running' },
+  streak8: { t:'Eight-week streak', d:'2+ sessions a week, eight weeks running' },
+  zone60:  { t:'Zone keeper',    d:'60+ minutes of UT2/UT1 in one week' },
+  finisher:{ t:'Finisher',       d:'Rowed a whole coached workout' },
+  combo25: { t:'Combo 25',       d:'25 good strokes in a row in a workout' },
+  combo50: { t:'Combo 50',       d:'50 good strokes in a row in a workout' },
+  perfect10:{ t:'Perfect ten',   d:'10 PERFECT strokes in a row' },
+  metronome:{ t:'Metronome',     d:'20 strokes in a row exactly on the rate' },
+  sharp:   { t:'Sharpshooter',   d:'90% accuracy over a whole workout' },
+};
+// Walk the sessions in time order and record what each one achieved compared with everything before it.
+function progress(sessions){
+  const ss = [...sessions].filter(s=>s.started_at).sort((a,b)=>a.started_at.localeCompare(b.started_at));
+  const P = { xp:0, level:0, pbs:{}, badges:{}, events:[], km:0, n:0, streak:0, weeks:{}, normal:null, tech:null };
+  const ergW = [], ergT = [];
+  for (const s of ss){
+    const t = new Date(s.started_at).getTime(), ev = [], pre = { w:median(ergW.slice(-10)), tech:ergT.length>=3 ? mean(ergT.slice(-10)) : null };
+    let xp = 20 + Math.round((s.distance||0)/100);
+    P.n++; P.km += (s.distance||0)/1000;
+    const wk = weekKey(t); P.weeks[wk] = P.weeks[wk] || { n:0, zmin:0 }; P.weeks[wk].n++;
+    const zs = s.summary && s.summary.zoneSec; if (zs) P.weeks[wk].zmin += ((zs.UT2||0)+(zs.UT1||0))/60; else if (s.zone==='UT2'||s.zone==='UT1') P.weeks[wk].zmin += (s.duration||0)/60;
+    if (isErg(s)){
+      const d = stdDist(s.distance||0);
+      if (d && s.duration){ const tt = s.duration*d/s.distance, old = P.pbs[d];
+        if (!old || tt < old.time){ P.pbs[d] = { time:tt, at:s.started_at, prev:old?old.time:null }; if (old){ ev.push({ k:'pb', d, time:tt, gain:old.time-tt }); xp += 60; } } }
+      if (s.avg_power && pre.w && s.avg_power >= pre.w*1.03) ev.push({ k:'watts', pct:(s.avg_power/pre.w-1)*100, w:s.avg_power, base:pre.w });
+      if (s.score!=null && pre.tech!=null && s.score >= pre.tech+5) ev.push({ k:'tech', score:s.score, gain:s.score-pre.tech });
+      if (s.avg_power) ergW.push(s.avg_power); if (s.score!=null) ergT.push(s.score);
+      if (s.score>=90) ev.push({ k:'badge', b:'smooth' }); if (s.summary && s.summary.peakPos && s.summary.peakPos<=0.42) ev.push({ k:'badge', b:'early' });
+    }
+    // streak: consecutive weeks with 2+ sessions, counted back from this session's week
+    let st = 0; for (let w = wk; P.weeks[w] && P.weeks[w].n>=2; w -= 7*864e5) st++;
+    if (st > P.streak && st >= 2) ev.push({ k:'streak', weeks:st }); P.streak = st;
+    if (P.n===1) ev.push({ k:'badge', b:'first' }); if (P.n===10) ev.push({ k:'badge', b:'ten' }); if (P.n===50) ev.push({ k:'badge', b:'fifty' });
+    if (P.km>=100) ev.push({ k:'badge', b:'km100' }); if (P.km>=500) ev.push({ k:'badge', b:'km500' });
+    if (ev.some(e=>e.k==='pb')) ev.push({ k:'badge', b:'pb' }); if (st>=3) ev.push({ k:'badge', b:'streak3' }); if (st>=8) ev.push({ k:'badge', b:'streak8' });
+    if (P.weeks[wk].zmin>=60) ev.push({ k:'badge', b:'zone60' });
+    const gm = s.summary && s.summary.game;
+    if (gm){ if (gm.done) ev.push({ k:'badge', b:'finisher' }); if (gm.maxCombo>=25) ev.push({ k:'badge', b:'combo25' }); if (gm.maxCombo>=50) ev.push({ k:'badge', b:'combo50' });
+      if (gm.maxP>=10) ev.push({ k:'badge', b:'perfect10' }); if (gm.maxBeat>=20) ev.push({ k:'badge', b:'metronome' }); if (gm.acc>=0.9 && gm.n>=30) ev.push({ k:'badge', b:'sharp' }); xp += Math.round((gm.score||0)/100); }
+    const real = [];
+    for (const e of ev){ if (e.k==='badge'){ if (P.badges[e.b]) continue; P.badges[e.b] = s.started_at; xp += 40; } real.push(e); }
+    P.xp += xp; let lv = P.level; while (P.xp >= xpNeed(lv+1)) lv++; if (lv > P.level){ real.push({ k:'level', level:lv, rank:rankOf(lv) }); P.level = lv; }
+    for (const e of real) P.events.push({ ...e, at:s.started_at, sid:s.id });
+  }
+  // the current streak only counts if this week or last week is still alive
+  const nowWk = weekKey(Date.now()); if (!(P.weeks[nowWk] && P.weeks[nowWk].n>=2) && !(P.weeks[nowWk-7*864e5] && P.weeks[nowWk-7*864e5].n>=2)) P.streak = 0;
+  P.normal = median(ergW.slice(-10)); P.tech = ergT.length ? mean(ergT.slice(-10)) : null;
+  P.toNext = xpNeed(P.level+1) - P.xp; P.lvFrac = (P.xp - xpNeed(P.level)) / (xpNeed(P.level+1) - xpNeed(P.level));
+  return P;
+}
+const rankOf = lv => RANKS[Math.min(RANKS.length-1, Math.floor(lv/3))] + ' ' + ['I','II','III'][lv%3];
+// Your own target pace for a distance: your PB there, else predicted from your other bests, else your normal watts.
+function ghostPace(P, dist){
+  if (P.pbs[dist]) return { pace:P.pbs[dist].time/(dist/500), src:'your best '+dist+' m' };
+  let best = null; for (const d in P.pbs){ const p = P.pbs[d].time/(d/500) + 5*Math.log2(dist/d); if (!best || p<best) best = p; }
+  if (best) return { pace:best, src:'predicted from your bests' };
+  if (P.normal) return { pace:500*Math.cbrt(2.8/P.normal), src:'your normal watts' };
+  return null;
+}
+// Text for one achievement, used on the big screen and on the phone.
+function evText(e){
+  switch (e.k){
+    case 'pb': return { big:'New PB!', line:`${e.d} m · ${fmtTime(e.time)}`, sub:`${fmt(e.gain,1)} s faster than before` };
+    case 'watts': return { big:`+${Math.round(e.pct)}%`, line:`${Math.round(e.w)} W average`, sub:`vs own normal ${Math.round(e.base)} W` };
+    case 'tech': return { big:'Cleaner stroke', line:`Technique ${e.score}`, sub:`+${Math.round(e.gain)} on own average` };
+    case 'streak': return { big:`${e.weeks}-week streak`, line:'2+ sessions every week', sub:'' };
+    case 'level': return { big:'Level up!', line:`Level ${e.level} · ${e.rank}`, sub:'' };
+    case 'badge': return { big:BADGES[e.b].t, line:BADGES[e.b].d, sub:'New badge' };
+    case 'ghost': return { big:'Beat the ghost', line:`${fmt(e.gain,1)} s ahead of ${e.src}`, sub:'' };
+    case 'live': return { big:`+${Math.round(e.pct)}%`, line:'above own normal right now', sub:`${Math.round(e.w)} W vs ${Math.round(e.base)} W` };
+  }
+  return { big:'', line:'', sub:'' };
+}
+const EV_W = { pb:10, ghost:9, level:8, watts:6, tech:6, streak:5, badge:3, live:7 };
+
+// ---------- state ----------
+const KEY = 'ergcoach.v1';
+const S = (()=>{ try{ return Object.assign({profile:{hgt:185,wgt:80}, sessions:[]}, JSON.parse(localStorage.getItem(KEY)||'{}')); }catch(e){ return {profile:{hgt:185,wgt:80}, sessions:[]}; } })();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ toast('Storage full: delete old sessions'); } }
+
+// the session being rowed right now
+const LIVE = { strokes:[], start:null, dist:0, rate:0, watt:0, pace:0, src:null };
+function newLive(src){ Object.assign(LIVE, {strokes:[], start:Date.now(), dist:0, rate:0, watt:0, pace:0, elapsed:0, src}); }
+
+// ---------- PM5 over Web Bluetooth ----------
+const UUID = n => `ce06${n}-43e5-11e4-916c-0800200c9a66`;
+const PM = {
+  dev:null, connected:false,
+  cur:{}, buf:[], bufN:0, bufGot:0, lastCount:-1,
+  async connect(){
+    const bt = navigator.bluetooth || navigator.webble;
+    if (!bt) throw new Error('nobt');
+    this.dev = await bt.requestDevice({ filters:[{namePrefix:'PM5'}], optionalServices:[UUID('0010'), UUID('0020'), UUID('0030')] });
+    this.dev.addEventListener('gattserverdisconnected', ()=>{ this.connected=false; pmUi(); toast('PM5 disconnected'); });
+    setCon('Connecting to '+(this.dev.name||'PM5')+' …');
+    const srv = await this.dev.gatt.connect();
+    const svc = await srv.getPrimaryService(UUID('0030'));
+    try{ const r = await svc.getCharacteristic(UUID('0034')); await r.writeValue(new Uint8Array([1])); }catch(e){}   // status every 500 ms
+    const subs = [['0031', this.onGeneral], ['0032', this.onAdditional], ['0035', this.onStroke], ['0036', this.onStroke2], ['003d', this.onCurve]];
+    for (const [id, fn] of subs){
+      try{
+        const c = await svc.getCharacteristic(UUID(id));
+        c.addEventListener('characteristicvaluechanged', e => { const dv = e.target.value; fn.call(this, new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)); });
+        await c.startNotifications();
+      }catch(e){ console.warn('PM5 char', id, e); }
+    }
+    this.connected = true; newLive('pm5'); pmUi();
+  },
+  disconnect(){ try{ this.dev && this.dev.gatt.disconnect(); }catch(e){} this.connected=false; pmUi(); },
+  u16(v,i){ return v[i] | (v[i+1]<<8); }, u24(v,i){ return v[i] | (v[i+1]<<8) | (v[i+2]<<16); },
+  onGeneral(v){ LIVE.elapsed = this.u24(v,0)*0.01; LIVE.dist = this.u24(v,3)*0.1; LIVE.drag = v[18]; liveUi(); },
+  onAdditional(v){ LIVE.rate = v[5]; LIVE.pace = this.u16(v,7)*0.01; if (LIVE.hrSrc!=='strap') LIVE.hr = (v[6] && v[6]<255) ? v[6] : null; liveUi(); },
+  onStroke(v){
+    const sd = { driveLen:v[6]*0.01, driveTime:v[7]*0.01, recTime:this.u16(v,8)*0.01, strokeDist:this.u16(v,10)*0.01,
+      peak:this.u16(v,12)*0.1*LBF, avg:this.u16(v,14)*0.1*LBF, work:this.u16(v,16)*0.1, count:this.u16(v,18) };
+    if (sd.count === this.lastCount) return;
+    this.cur.sd = sd; this.tryFinish();
+  },
+  onStroke2(v){ this.cur.power = this.u16(v,3); LIVE.watt = this.cur.power; liveUi(); },
+  onCurve(v){
+    // byte 0: high nibble = packets in this curve, low nibble = 16-bit points in this packet; byte 1 = sequence
+    const total = (v[0]>>4)&15, n = v[0]&15;
+    if (this.bufGot === 0 || this.bufN !== total) { this.buf = []; this.bufN = total; this.bufGot = 0; }
+    for (let i=0; i<n; i++) this.buf.push(this.u16(v, 2+i*2)*LBF);
+    this.bufGot++;
+    if (this.bufGot >= this.bufN){ this.cur.curve = this.buf.slice(); this.bufGot = 0; this.tryFinish(); }
+  },
+  tryFinish(){
+    clearTimeout(this.ft);
+    if (this.cur.curve && this.cur.sd) return this.finish();
+    this.ft = setTimeout(()=>this.finish(), 1500);     // one of the two never came: keep what we have
+  },
+  finish(){
+    clearTimeout(this.ft);
+    const c = this.cur; this.cur = {};
+    if (!c.curve && !c.sd) return;
+    if (c.sd) this.lastCount = c.sd.count;
+    addStroke(Object.assign({ t:Date.now(), curve:c.curve||null, power:c.power||LIVE.watt, rate:LIVE.rate }, c.sd||{}));
+  }
+};
+
+// ---------- demo rower (to try the app without an erg) ----------
+const DEMO = { on:false, kind:'good', h:null, n:0 };
+function demoCurve(kind){
+  const N = 32, out = [];
+  for (let i=0;i<N;i++){
+    const x = i/(N-1); let f;
+    const bell = (c, w) => Math.exp(-(((x-c)/w)**2));
+    switch(kind){
+      case 'soft':  f = Math.pow(x,1.6)*0.3 + bell(0.52,0.24); break;
+      case 'late':  f = bell(0.62,0.22) + 0.15*bell(0.3,0.15); break;
+      case 'hump':  f = 0.95*bell(0.3,0.13) + 0.85*bell(0.66,0.14); break;
+      case 'spike': f = bell(0.2,0.09)*1.15 + 0.45*bell(0.5,0.28); break;
+      default:      f = Math.sin(Math.PI*Math.pow(x,0.756)); f = Math.pow(Math.max(0,f),1.15);
+    }
+    if (i===0 || i===N-1) f *= 0.15;
+    out.push(Math.max(0, f*(1+(Math.random()-0.5)*0.06)));
+  }
+  const pk = 520 + (Math.random()-0.5)*40, m = Math.max(...out);
+  return out.map(v=>v/m*pk);
+}
+function demoStroke(){
+  const rate = 22 + Math.round((Math.random()-0.5)*2);
+  const curve = demoCurve(DEMO.kind);
+  const driveTime = DEMO.kind==='good' ? 0.82 : 0.78 + Math.random()*0.08;
+  const recTime = 60/rate - driveTime - (DEMO.kind==='spike' ? 0.5 : 0);
+  const driveLen = (S.profile.hgt||185)*0.0079 * (DEMO.kind==='soft' ? 0.92 : 1);
+  const avg = mean(curve), peak = Math.max(...curve);
+  const power = Math.round(avg*driveLen/driveTime*0.92);
+  if (LIVE.hrSrc!=='strap') LIVE.hr = Math.round(Math.min(168, 105 + DEMO.n*1.6 + (Math.random()-0.5)*3));
+  LIVE.rate = rate; LIVE.watt = power; LIVE.pace = paceFromWatts(power); LIVE.dist += 500/LIVE.pace*60/rate;
+  addStroke({ t:Date.now(), curve, driveLen, driveTime, recTime:Math.max(0.6,recTime), peak, avg, power, rate, count:++DEMO.n });
+  DEMO.h = setTimeout(demoStroke, 60/rate*1000);
+}
+function startDemo(){ if (PM.connected) PM.disconnect(); clearTimeout(DEMO.h); DEMO.on = true; DEMO.n = 0; newLive('demo'); demoStroke(); pmUi(); $('demoSeg').classList.remove('hidden'); }
+function stopDemo(){ DEMO.on=false; clearTimeout(DEMO.h); pmUi(); $('demoSeg').classList.add('hidden'); }
+
+function addStroke(s){
+  if (!LIVE.start) newLive(DEMO.on ? 'demo' : 'pm5');
+  if (s.hr==null) s.hr = LIVE.hr || null;
+  LIVE.strokes.push(s);
+  HOOKS.stroke.forEach(f=>{ try{ f(s); }catch(e){ console.warn(e); } });
+  if (!s.power && s.avg && s.driveLen && s.driveTime) s.power = Math.round(s.avg*s.driveLen/s.driveTime*0.92);
+  liveUi(); if (VIEW==='live') renderLiveChart(); if (VIEW==='tech') renderTech();
+}
+
+// ---------- UI shell ----------
+let VIEW = 'con';
+function showView(v){
+  VIEW = v;
+  for (const s of ['con','live','tech','video','log']) $('v-'+s).classList.toggle('hidden', s!==v);
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('active', b.dataset.v===v));
+  if (v==='live') { liveUi(); renderLiveChart(); }
+  if (v==='tech') renderTech();
+  if (v==='log') renderLog();
+  if (v==='video') videoView();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showView(b.dataset.v));
+function setCon(t){ $('conStatus').textContent = t; }
+function pmUi(){
+  const on = PM.connected || DEMO.on;
+  $('pmDot').classList.toggle('on', on);
+  $('pmTxt').textContent = PM.connected ? (PM.dev && PM.dev.name || 'PM5')+' connected' : DEMO.on ? 'Demo rowing' : 'PM5 not connected';
+  $('btnConnect').textContent = PM.connected ? 'Disconnect' : 'Connect PM5';
+  $('btnDemo').textContent = DEMO.on ? 'Stop demo' : 'Try demo rowing';
+  setCon(PM.connected ? 'Connected. Start rowing — strokes appear under Live.' : DEMO.on ? 'Demo is rowing at about 22 strokes/min. Pick a fault to see how the analysis reacts.' : '');
+}
+function btCheck(){
+  const ok = !!(navigator.bluetooth || navigator.webble);
+  $('btWarn').innerHTML = ok ? '' : `<div class="note"><b>This browser can't use Bluetooth.</b> On iPhone and iPad, open this page in the free <b>Bluefy</b> browser from the App Store. On Android, Mac and PC use <b>Chrome</b> or <b>Edge</b>. Video analysis works everywhere, Safari included.</div>`;
+}
+$('btnConnect').onclick = async ()=>{
+  if (PM.connected) return PM.disconnect();
+  stopDemo();
+  try{ await PM.connect(); showView('live'); }
+  catch(e){
+    if (e.message==='nobt') { btCheck(); setCon('No Web Bluetooth here — see above.'); }
+    else if (e.name==='NotFoundError') setCon('No PM5 chosen. Wake the monitor and try again.');
+    else setCon('Could not connect: '+e.message);
+  }
+};
+$('btnDemo').onclick = ()=>{ if (DEMO.on) stopDemo(); else { startDemo(); showView('live'); } };
+$('demoSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{ DEMO.kind=b.dataset.d; $('demoSeg').querySelectorAll('button').forEach(x=>x.classList.toggle('active',x===b)); });
+$('pHgt').value = S.profile.hgt; $('pWgt').value = S.profile.wgt;
+$('pHgt').oninput = ()=>{ S.profile.hgt = +$('pHgt').value||null; save(); };
+$('pWgt').oninput = ()=>{ S.profile.wgt = +$('pWgt').value||null; save(); };
+
+// ---------- live ----------
+function liveUi(){
+  if (VIEW!=='live') return;
+  const last = LIVE.strokes[LIVE.strokes.length-1];
+  $('lPace').textContent = fmtPace(LIVE.pace || (last && paceFromWatts(last.power)));
+  $('lRate').textContent = LIVE.rate || '–';
+  $('lWatt').textContent = LIVE.watt || (last && last.power) || '–';
+  $('lDist').textContent = LIVE.dist ? Math.round(LIVE.dist) : '–';
+  $('lStroke').textContent = LIVE.strokes.length + ' strokes';
+  const z = zoneOf(profileHR(), LIVE.hr);
+  $('lHr').textContent = LIVE.hr || '–';
+  $('lZone').textContent = z ? `${z.k} · ${Math.round(z.r*100)} % of HR reserve` : LIVE.hr ? 'Add max and resting HR under PM5 → You' : 'no heart rate';
+  $('lZone').style.background = z ? z.col : '';
+  HOOKS.status.forEach(f=>f());
+}
+$('btnLiveTech').onclick = ()=>showView('tech');
+$('btnSave').onclick = ()=>{
+  stopDemo(); if (PM.connected) PM.disconnect();
+  if (LIVE.strokes.length < 5) { toast('Row at least 5 strokes first'); return; }
+  S.sessions.unshift(packSession(LIVE)); S.sessions = S.sessions.slice(0,40); save();
+  saveCloud(LIVE).then(ok=>toast(ok ? 'Saved to your diary and the team' : 'Session saved on this phone'));
+  newLive(null); LIVE.start=null; showView('log');
+};
+function packSession(L){
+  const ss = L.strokes.map(s=>({ h:s.hr||undefined, t:s.t, c:s.curve ? resample(s.curve,40).map(v=>Math.round(v)) : null, dl:s.driveLen, dt:s.driveTime, rt:s.recTime, p:s.power, r:s.rate, pk:s.peak?Math.round(s.peak):null, av:s.avg?Math.round(s.avg):null }));
+  return { id:'s'+Date.now().toString(36), start:L.start, src:L.src, dist:Math.round(L.dist||0), strokes:ss };
+}
+function unpack(sess){ return (sess.strokes||[]).map(s=>({ hr:s.h, t:s.t, curve:s.c, driveLen:s.dl, driveTime:s.dt, recTime:s.rt, power:s.p, rate:s.r, peak:s.pk, avg:s.av })); }
+
+// ---------- force curve analysis ----------
+function resample(a, n=50){
+  if (!a || a.length<2) return [];
+  const out = [];
+  for (let i=0;i<n;i++){ const p = i/(n-1)*(a.length-1), k = Math.floor(p), f = p-k; out.push(k+1<a.length ? a[k]*(1-f)+a[k+1]*f : a[k]); }
+  return out;
+}
+const smooth3 = a => a.map((v,i)=> i===0||i===a.length-1 ? v : (a[i-1]+2*v+a[i+1])/4);
+// target shape: smooth bell, peak at about 40 % of the drive
+const IDEAL = (()=>{ const r=[]; for(let i=0;i<50;i++){ const x=i/49; r.push(Math.pow(Math.max(0,Math.sin(Math.PI*Math.pow(x,0.756))),1.15)); } return r; })();
+function pearson(a,b){ const ma=mean(a), mb=mean(b); let n=0,da=0,db=0; for(let i=0;i<a.length;i++){ n+=(a[i]-ma)*(b[i]-mb); da+=(a[i]-ma)**2; db+=(b[i]-mb)**2; } return n/Math.sqrt(da*db||1); }
+
+function curveMetrics(curve){
+  const r = smooth3(resample(curve, 50)); if (!r.length) return null;
+  const pk = Math.max(...r), pi = r.indexOf(pk), x = i => i/49;
+  const avg = mean(r);
+  let pickup = 1; for (let i=0;i<r.length;i++) if (r[i] >= 0.5*pk){ pickup = x(i); break; }
+  let drop = 1; for (let i=pi;i<r.length;i++) if (r[i] < 0.3*pk){ drop = x(i); break; }
+  // humps: local maxima that stand out by more than 8 % of peak
+  const peaks = [];
+  for (let i=1;i<r.length-1;i++) if (r[i]>=r[i-1] && r[i]>r[i+1] && r[i]>0.4*pk) peaks.push(i);
+  let humps = peaks.length ? 1 : 0, dip = 0;
+  for (let k=1;k<peaks.length;k++){ const a=peaks[k-1], b=peaks[k]; const lo = Math.min(...r.slice(a,b+1)); const d = (Math.min(r[a],r[b]) - lo)/pk; if (d > 0.08){ humps++; dip = Math.max(dip,d); } }
+  const tot = r.reduce((s,v)=>s+v,0);
+  const tail = r.slice(40).reduce((s,v)=>s+v,0)/tot;     // share of the work in the last 20 %
+  return { r, pk, peakPos:x(pi), ratio:pk/avg, pickup, drop, humps, dip, tail, shape:pearson(r.map(v=>v/pk), IDEAL) };
+}
+
+function summarize(strokes){
+  const withC = strokes.filter(s=>s.curve && s.curve.length>4);
+  const ms = withC.map(s=>curveMetrics(s.curve)).filter(Boolean);
+  const avgCurve = ms.length ? IDEAL.map((_,i)=>mean(ms.map(m=>m.r[i]))) : [];
+  const m = k => mean(ms.map(x=>x[k]));
+  // consistency: spread of the normalised curves, where force is meaningful
+  let cv = 0;
+  if (ms.length>=3){ const vals=[]; for(let i=0;i<50;i++){ const col = ms.map(x=>x.r[i]/x.pk); const mu=mean(col); if (mu>0.3) vals.push(sd(col)/mu); } cv = mean(vals); }
+  const dt = mean(strokes.filter(s=>s.driveTime).map(s=>s.driveTime)), rt = mean(strokes.filter(s=>s.recTime).map(s=>s.recTime));
+  const dl = mean(strokes.filter(s=>s.driveLen).map(s=>s.driveLen));
+  const rate = mean(strokes.filter(s=>s.rate).map(s=>s.rate)), power = mean(strokes.filter(s=>s.power).map(s=>s.power));
+  const humpShare = ms.length ? ms.filter(x=>x.humps>1).length/ms.length : 0;
+  return { n:strokes.length, nC:ms.length, avgCurve, peakPos:m('peakPos'), ratio:m('ratio'), pickup:m('pickup'), drop:m('drop'), tail:m('tail'), shape:m('shape'), humpShare, dip:m('dip'), cv, dt, rt, dl, rate, power, pk:m('pk') };
+}
+
+function findings(su){
+  const F = [], H = S.profile.hgt;
+  const add = (sev, title, what, why, drill) => F.push({sev, title, what, why, drill});
+  if (su.pickup > 0.24) add(su.pickup>0.32?2:1, 'Soft catch',
+    `Force reaches half of its peak only after ${Math.round(su.pickup*100)} % of the drive (aim for under 20 %).`,
+    'The blade is not locked on when the legs start. The first part of the drive is lost: the handle moves but nothing pushes the boat.',
+    '<b>Drill:</b> catch at half slide, 3 × 10 strokes — hang off the handle, feel the load, then push. Think "connect, then drive".');
+  if (su.peakPos > 0.52) add(su.peakPos>0.6?2:1, 'Peak comes late',
+    `The peak is at ${Math.round(su.peakPos*100)} % of the drive (aim for 35–45 %).`,
+    'Back and arms are doing the work that the legs should have done. The legs push softly and the body pulls hard at the end.',
+    '<b>Drill:</b> legs only, then legs + back, 5 min each. Keep the arms long until the legs are almost flat.');
+  if (su.peakPos < 0.3 && su.drop < 0.75) add(2, 'Early spike, then drop-off',
+    `Peak at ${Math.round(su.peakPos*100)} % and the force falls below 30 % already at ${Math.round(su.drop*100)} %.`,
+    'Classic slide shooting: the legs kick, the seat runs away and the back does not follow. The handle loses pressure in the middle.',
+    '<b>Drill:</b> pause at body-over, then "push the handle with the legs" — the shoulders and the seat must move together for the first third.');
+  if (su.humpShare > 0.35) add(su.humpShare>0.6?2:1, 'Two humps in the curve',
+    `${Math.round(su.humpShare*100)} % of the strokes show a dip of about ${Math.round(su.dip*100)} % between two peaks.`,
+    'There is a gap between the legs and the back opening (or between back and arms). The handle slows down while the next part takes over.',
+    '<b>Drill:</b> overlap the phases: start opening the back as the knees pass about 2/3 flat. Row 10 strokes at rate 18 focusing on one long push.');
+  if (su.ratio > 2.0) add(1, 'Spiky curve',
+    `Peak force is ${fmt(su.ratio,1)} × the average (a full, round curve is about 1.6–1.9 ×).`,
+    'Power comes in a short punch instead of a steady push through the whole drive.',
+    '<b>Drill:</b> "accelerate the handle all the way to the finish" — 5 min at rate 20 with the PM on the force curve screen, aim for a fat round curve.');
+  if (su.tail > 0.14) add(1, 'Long, weak finish',
+    `${Math.round(su.tail*100)} % of the work happens in the last fifth of the drive.`,
+    'The arms are dragging the handle in slowly at the end instead of finishing the stroke with the back held.',
+    '<b>Drill:</b> arms-and-body only, sharp draw to the lower ribs, hands away fast.');
+  if (su.cv > 0.12 && su.nC >= 8) add(1, 'Strokes vary a lot',
+    `The curve shape varies ${Math.round(su.cv*100)} % from stroke to stroke (aim for under 10 %).`,
+    'The technique is not repeatable yet. Every stroke is a little different, so it is hard to build on.',
+    '<b>Drill:</b> 3 × 5 min at rate 18–20, same pressure every stroke, eyes on the force curve.');
+  if (su.dt && su.rt && su.rate && su.rate < 28 && su.rt/su.dt < 1.6) add(1, 'Rushing the slide',
+    `Recovery is only ${fmt(su.rt/su.dt,1)} × the drive at rate ${Math.round(su.rate)} (aim for 2 × or more below rate 26).`,
+    'You come up the slide fast and then wait or hit the catch. Speed on the recovery costs energy and shortens the next stroke.',
+    '<b>Drill:</b> ratio work — rate 18, count "1" on the drive and "1-2-3" on the recovery.');
+  if (su.dl && H){ const want = H*0.0079, lo = want*0.92; if (su.dl < lo) add(1, 'Short stroke',
+    `Drive length ${fmt(su.dl,2)} m. For ${H} cm, about ${fmt(want,2)} m is normal.`,
+    'Either you are not reaching full compression at the catch (shins vertical), or the finish is cut short.',
+    '<b>Drill:</b> pause at the catch with shins vertical and arms long; check the footstretcher height so the knees can come up.'); }
+  if (!F.length && su.nC >= 5) add(0, 'Good curve', 'Smooth, single hump, peak in the first half and a quick pickup.', 'Keep this shape as the rate goes up.', '<b>Next:</b> hold the same curve at rate 24 and 28, then in race pieces.');
+  return F.sort((a,b)=>b.sev-a.sev);
+}
+function scoreOf(su){
+  let s = 100;
+  s -= clamp((su.pickup-0.18)*150,0,20); s -= clamp(Math.abs(su.peakPos-0.4)*120 - 6,0,20);
+  s -= clamp((su.humpShare-0.15)*40,0,15); s -= clamp((su.ratio-1.9)*30,0,10); s -= clamp((su.cv-0.08)*120,0,15);
+  s -= clamp((su.tail-0.12)*100,0,8); s -= clamp((1-su.shape)*60,0,12);
+  return Math.round(clamp(s,0,100));
+}
+
+// ---------- charts ----------
+function forceChart(curves, opt={}){
+  const W=340, H=opt.h||190, L=34, R=10, T=12, B=26;
+  const all = curves.flatMap(c=>c.data||[]); const ymax = Math.max(100, ...all, ...(opt.ideal?[opt.ideal]:[]))*1.08;
+  const X = x => L + x*(W-L-R), Y = y => T + (1-y/ymax)*(H-T-B);
+  const path = (a) => a.map((v,i)=>`${i?'L':'M'}${X(i/(a.length-1)).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+  let g = '';
+  const step = ymax>1200 ? 400 : ymax>600 ? 200 : 100;
+  for (let v=0; v<ymax; v+=step) g += `<line x1="${L}" y1="${Y(v)}" x2="${W-R}" y2="${Y(v)}" stroke="#eee"/><text x="${L-5}" y="${Y(v)+3}" font-size="9" text-anchor="end" fill="#888">${v}</text>`;
+  for (const p of [0,0.25,0.5,0.75,1]) g += `<text x="${X(p)}" y="${H-10}" font-size="9" text-anchor="middle" fill="#888">${Math.round(p*100)}%</text>`;
+  g += `<text x="${L}" y="${T-2}" font-size="9" fill="#888">N</text><text x="${W-R}" y="${H-1}" font-size="9" fill="#888" text-anchor="end">drive →</text>`;
+  if (opt.ideal) g += `<path d="${path(IDEAL.map(v=>v*opt.ideal))}" fill="none" stroke="${IK}" stroke-width="1.5" stroke-dasharray="4 3"/>`;
+  for (const c of curves) if (c.data && c.data.length>1) g += `<path d="${path(c.data)}" fill="${c.fill||'none'}" stroke="${c.col}" stroke-width="${c.w||1.5}" ${c.dash?`stroke-dasharray="${c.dash}"`:''} stroke-linejoin="round"/>`;
+  if (opt.marks) for (const m of opt.marks) g += `<line x1="${X(m.x)}" y1="${T}" x2="${X(m.x)}" y2="${H-B}" stroke="${m.col||MG}" stroke-dasharray="2 3"/><text x="${X(m.x)+3}" y="${T+9}" font-size="9" fill="${m.col||MG}">${m.t}</text>`;
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" font-family="Chivo Mono,monospace">${g}</svg>`;
+}
+
+function renderLiveChart(){
+  const ss = LIVE.strokes.filter(s=>s.curve);
+  const last = ss[ss.length-1], prev = ss.slice(-6,-1);
+  const curves = prev.map(s=>({data:resample(s.curve,50), col:'#c8c8c8', w:1.2}));
+  if (last) curves.push({data:resample(last.curve,50), col:MG, w:3});
+  $('lChart').innerHTML = forceChart(curves, {ideal: last ? Math.max(...last.curve) : 0});
+  if (!last){ $('lChips').innerHTML = `<p class="hint" style="grid-column:1/-1">${PM.connected||DEMO.on ? 'Take a stroke — the curve of each drive shows up here.' : 'Connect a PM5 or start the demo under <b>PM5</b>.'}</p>`; return; }
+  const m = curveMetrics(last.curve), lastS = LIVE.strokes[LIVE.strokes.length-1];
+  const chip = (v,l,warn) => `<div class="chip ${warn?'warn':''}"><div class="cv">${v}</div><div class="cl">${l}</div></div>`;
+  $('lChips').innerHTML =
+    chip(Math.round(m.peakPos*100)+' %', 'peak position · aim 35–45 %', m.peakPos>0.52||m.peakPos<0.3) +
+    chip(Math.round(m.pickup*100)+' %', 'to half force · aim < 20 %', m.pickup>0.24) +
+    chip(m.humps>1 ? 'two humps' : 'one hump', 'curve shape', m.humps>1) +
+    chip(lastS.driveTime&&lastS.recTime ? '1 : '+fmt(lastS.recTime/lastS.driveTime,1) : '–', 'drive : recovery', lastS.rate<28 && lastS.recTime/lastS.driveTime<1.6) +
+    chip(lastS.driveLen ? fmt(lastS.driveLen,2)+' m' : '–', 'drive length', false) +
+    chip(Math.round(m.pk)+' N', 'peak force · '+Math.round(m.pk/9.81)+' kg', false);
+}
+
+function renderTech(sess){
+  const strokes = sess ? unpack(sess) : LIVE.strokes;
+  const tp = $('techPane');
+  const title = sess ? `Session ${new Date(sess.start).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})}` : 'This session';
+  if (strokes.filter(s=>s.curve).length < 3){
+    tp.innerHTML = `<h2>${esc(title)}</h2><p class="hint">Row at least a few strokes with a PM5 (or the demo) to get an analysis. Saved sessions are under <b>Log</b>.</p>`; return;
+  }
+  const use = sess ? strokes : strokes.slice(-20);
+  const su = summarize(use), F = findings(su), sc = scoreOf(su);
+  const ms = use.filter(s=>s.curve).map(s=>resample(s.curve,50));
+  const hi = IDEAL.map((_,i)=>Math.max(...ms.map(m=>m[i]))), lo = IDEAL.map((_,i)=>Math.min(...ms.map(m=>m[i])));
+  tp.innerHTML = `<h2>${esc(title)} · ${use.length} strokes${sess?'':' (last 20)'}</h2>
+    <div class="score"><div class="sv">${sc}</div><div class="st">technique score<br>${su.rate?Math.round(su.rate)+' s/m · ':''}${su.power?Math.round(su.power)+' W · ':''}${fmtPace(paceFromWatts(su.power))} /500 m</div></div>
+    <div style="margin-top:12px">${forceChart([{data:hi,col:'#d6d6d6',w:1},{data:lo,col:'#d6d6d6',w:1},{data:su.avgCurve,col:MG,w:3}], {h:210, ideal:su.pk, marks:[{x:su.peakPos,t:'peak'}]})}</div>
+    <div class="legend"><span><i style="background:#FD08FF;height:4px"></i>your average curve</span><span><i style="background:#d6d6d6"></i>highest / lowest stroke</span><span><i style="background:repeating-linear-gradient(90deg,#2e2e2e 0 4px,transparent 4px 7px)"></i>target shape</span></div>
+    <div class="chips">
+      <div class="chip ${su.peakPos>0.52||su.peakPos<0.3?'warn':''}"><div class="cv">${Math.round(su.peakPos*100)} %</div><div class="cl">peak position</div></div>
+      <div class="chip ${su.pickup>0.24?'warn':''}"><div class="cv">${Math.round(su.pickup*100)} %</div><div class="cl">to half force</div></div>
+      <div class="chip ${su.ratio>2?'warn':''}"><div class="cv">${fmt(su.ratio,2)}</div><div class="cl">peak ÷ average</div></div>
+      <div class="chip ${su.cv>0.12?'warn':''}"><div class="cv">${Math.round(su.cv*100)} %</div><div class="cl">stroke-to-stroke variation</div></div>
+      <div class="chip"><div class="cv">${su.dl?fmt(su.dl,2)+' m':'–'}</div><div class="cl">drive length</div></div>
+      <div class="chip ${su.rt/su.dt<1.6&&su.rate<28?'warn':''}"><div class="cv">${su.dt?'1 : '+fmt(su.rt/su.dt,1):'–'}</div><div class="cl">drive : recovery</div></div>
+    </div>
+    <div style="margin-top:16px">${F.map(f=>`<div class="find"><h3>${esc(f.title)}${f.sev?`<span class="sev ${f.sev>1?'hi':''}">${f.sev>1?'work on this':'check'}</span>`:''}</h3><p>${f.what}</p><p style="color:var(--ink-mid)">${f.why}</p><div class="drill">${f.drill}</div></div>`).join('')}</div>`;
+}
+
+
+// ---------- video analysis ----------
+const VID = { track:[], frames:[], an:null, W:0, H:0, base:null, recStart:null, stream:null, rec:null, overlay:true, raf:0, pose:null };
+const LMK = { sh:[11,12], el:[13,14], wr:[15,16], hip:[23,24], kn:[25,26], an:[27,28], ft:[31,32] };
+const MP = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2';
+const POSE_MODEL = 'https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task';
+const vid = $('vid'), vcan = $('vcan');
+const deg = r => r*180/Math.PI;
+const dist = (a,b) => Math.hypot(a[0]-b[0], a[1]-b[1]);
+function ang3(a,b,c){ const v1=[a[0]-b[0],a[1]-b[1]], v2=[c[0]-b[0],c[1]-b[1]]; return deg(Math.acos(clamp((v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)||1),-1,1))); }
+function vStatus(t){ $('vStatus').innerHTML = t; }
+
+function videoView(){ drawOverlay(); }
+function showVideo(on){ vid.classList.toggle('hidden', !on); $('vEmpty').classList.toggle('hidden', on); }
+
+// --- sources ---
+$('vLoad').onclick = ()=>$('vFile').click();
+$('vFile').onchange = e => { const f = e.target.files[0]; if (!f) return; resetVideo(); VID.recStart = null; vid.srcObject = null; vid.src = URL.createObjectURL(f); vid.load(); showVideo(true); $('vAnaBar').classList.remove('hidden'); vStatus(`Loaded ${esc(f.name)}. Tap <b>Find joints &amp; analyse</b>.`); };
+$('vRec').onclick = async ()=>{
+  try{
+    VID.stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment', width:{ideal:1280}, height:{ideal:720}, frameRate:{ideal:30} }, audio:false });
+  }catch(e){ vStatus('The camera is not available in this browser. Film with the Camera app and use <b>Load video</b>.'); return; }
+  resetVideo(); vid.src = ''; vid.srcObject = VID.stream; showVideo(true); await vid.play().catch(()=>{});
+  const chunks = [], type = ['video/mp4','video/webm;codecs=vp9','video/webm'].find(t=>window.MediaRecorder && MediaRecorder.isTypeSupported(t)) || '';
+  VID.rec = new MediaRecorder(VID.stream, type?{mimeType:type}:{});
+  VID.rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  VID.rec.onstop = ()=>{
+    VID.stream.getTracks().forEach(t=>t.stop()); vid.srcObject = null;
+    vid.src = URL.createObjectURL(new Blob(chunks, {type: type||'video/mp4'})); vid.load();
+    $('vRecBar').classList.add('hidden'); $('vSrcBar').classList.remove('hidden'); $('vAnaBar').classList.remove('hidden');
+    vStatus('Recorded'+(LIVE.strokes.length ? ' — synced with the PM5 strokes rowed meanwhile' : '')+'. Tap <b>Find joints &amp; analyse</b>.');
+  };
+  VID.rec.start(); VID.recStart = Date.now();
+  $('vSrcBar').classList.add('hidden'); $('vRecBar').classList.remove('hidden'); vStatus('Recording… row a few strokes, then Stop.');
+};
+$('vStop').onclick = ()=>{ if (VID.rec && VID.rec.state!=='inactive') VID.rec.stop(); };
+function resetVideo(){ Object.assign(VID, {track:[], frames:[], an:null, base:null}); $('vPlay').classList.add('hidden'); $('vResult').classList.add('hidden'); $('vSyncPanel').classList.add('hidden'); $('vProg').style.width='0'; const c=vcan.getContext('2d'); c.clearRect(0,0,vcan.width,vcan.height); }
+
+// --- pose tracking ---
+async function getPose(){
+  if (window.__mockPose) return { detectForVideo:(v,ts)=>({landmarks:[window.__mockPose(ts/1000)]}) };
+  if (VID.pose) return VID.pose;
+  vStatus('Loading the body-tracking model (about 9 MB, first time only)…');
+  const m = await import(MP + '/vision_bundle.mjs');
+  const fs = await m.FilesetResolver.forVisionTasks(MP + '/wasm');
+  const opts = d => ({ baseOptions:{ modelAssetPath:POSE_MODEL, delegate:d }, runningMode:'VIDEO', numPoses:1, minPoseDetectionConfidence:0.4, minTrackingConfidence:0.4 });
+  try{ VID.pose = await m.PoseLandmarker.createFromOptions(fs, opts('GPU')); }catch(e){ VID.pose = await m.PoseLandmarker.createFromOptions(fs, opts('CPU')); }
+  return VID.pose;
+}
+function seek(t){ return new Promise(res=>{ const done=()=>{ vid.removeEventListener('seeked',done); res(); }; vid.addEventListener('seeked',done); vid.currentTime = t; setTimeout(done, 1500); }); }
+$('vAnalyse').onclick = async ()=>{
+  const btn = $('vAnalyse'); btn.disabled = true;
+  try{
+    if (!vid.duration || !isFinite(vid.duration)) await new Promise(r=>{ vid.onloadedmetadata=r; setTimeout(r,3000); });
+    const pose = await getPose();
+    vid.pause(); VID.W = vid.videoWidth || 1280; VID.H = vid.videoHeight || 720; VID.track = [];
+    const fps = 20, dur = vid.duration || 0, n = Math.floor(dur*fps);
+    for (let i=0;i<=n;i++){
+      const t = i/fps; await seek(t);
+      let L = null;
+      try{ const r = pose.detectForVideo(vid, Math.round(t*1000)+1); L = r.landmarks && r.landmarks[0] ? r.landmarks[0].map(p=>[p.x,p.y,p.visibility??1]) : null; }catch(e){}
+      VID.track.push({t, L});
+      if (i%5===0){ $('vProg').style.width = (i/n*100)+'%'; vStatus(`Finding joints… ${Math.round(i/n*100)} %`); await new Promise(r=>setTimeout(r,0)); }
+    }
+    $('vProg').style.width = '100%';
+    analyseVideo();
+  }catch(e){ console.error(e); vStatus('Could not run the body tracking: '+esc(e.message)+'. It needs an internet connection the first time.'); }
+  btn.disabled = false;
+};
+
+// --- turn landmarks into rowing angles and strokes ---
+function analyseVideo(){
+  const tr = VID.track.filter(f=>f.L);
+  if (tr.length < 20){ vStatus('Could not find a person in enough frames. Film from the side with the whole body in view.'); return; }
+  const vis = s => mean(tr.map(f=>Object.values(LMK).reduce((a,k)=>a+(f.L[k[s]][2]||0),0)));
+  const si = vis(0) >= vis(1) ? 0 : 1, W = VID.W, H = VID.H;
+  let fr = tr.map(f=>{ const o={t:f.t}; for (const k in LMK){ const p=f.L[LMK[k][si]]; o[k]=[p[0]*W,p[1]*H]; } return o; });
+  // smooth every joint over 5 frames
+  fr = fr.map((f,i)=>{ const o={t:f.t}; for (const k in LMK){ const w = fr.slice(Math.max(0,i-2), i+3); o[k] = [mean(w.map(x=>x[k][0])), mean(w.map(x=>x[k][1]))]; } return o; });
+  const dir = Math.sign(mean(fr.map(f=>f.an[0]-f.hip[0]))) || 1;           // +1 = feet to the right
+  const thigh = mean(fr.map(f=>dist(f.hip,f.kn))), mpp = ((S.profile.hgt||185)*0.245/100)/thigh;
+  for (const f of fr){
+    f.seat = dir*(f.an[0]-f.hip[0])*mpp;                 // hip to ankle, m (small at the catch)
+    f.hand = dir*(f.an[0]-f.wr[0])*mpp;                  // ankle to hands, m
+    f.knee = ang3(f.hip,f.kn,f.an); f.elbow = ang3(f.sh,f.el,f.wr);
+    f.trunk = deg(Math.atan2(dir*(f.sh[0]-f.hip[0]), f.hip[1]-f.sh[1]));   // + = leaning towards the feet
+    f.shin = deg(Math.atan2(dir*(f.kn[0]-f.an[0]), f.an[1]-f.kn[1]));      // + = knee past the ankle
+    f.handsPastKnee = dir*(f.an[0]-f.wr[0]) < dir*(f.an[0]-f.kn[0]);
+  }
+  // catches (seat closest to the feet) and finishes (furthest), with hysteresis
+  const sv = fr.map(f=>f.seat).slice().sort((a,b)=>a-b), lo = sv[Math.floor(sv.length*0.05)], hi = sv[Math.floor(sv.length*0.95)], rng = hi-lo;
+  const ev = []; let mode = null, best = null;
+  fr.forEach((f,i)=>{
+    if (f.seat < lo+0.3*rng){ if (mode!=='c'){ if (best) ev.push(best); mode='c'; best={k:'c',i}; } else if (f.seat < fr[best.i].seat) best.i=i; }
+    else if (f.seat > hi-0.3*rng){ if (mode!=='f'){ if (best) ev.push(best); mode='f'; best={k:'f',i}; } else if (f.seat > fr[best.i].seat) best.i=i; }
+  });
+  if (best) ev.push(best);
+  const strokes = [];
+  for (let j=0;j+2<ev.length;j++){
+    if (ev[j].k!=='c' || ev[j+1].k!=='f' || ev[j+2].k!=='c') continue;
+    const c=ev[j].i, f=ev[j+1].i, c2=ev[j+2].i, C=fr[c], Fi=fr[f];
+    const drv = fr.slice(c,f+1), rec = fr.slice(f,c2+1), T = x => x ? x.t-C.t : null;
+    const firstD = pred => drv.find(pred);
+    const leg50 = firstD(x=>x.knee >= C.knee+0.5*(Fi.knee-C.knee)), back = firstD(x=>x.trunk <= C.trunk-5), arm = C.elbow>155 ? firstD(x=>x.elbow<=155) : null, vert = firstD(x=>x.trunk<=0);
+    const s30 = firstD(x=>x.seat-C.seat >= 0.3*(Fi.seat-C.seat));
+    const shoot = s30 ? (s30.hand-C.hand)/Math.max(0.01, s30.seat-C.seat) : 1;
+    const kBend = rec.find(x=>x.knee <= Fi.knee-12), hPast = rec.find(x=>x.handsPastKnee);
+    // handle speed during the drive (m/s)
+    const hv = drv.map((x,k)=>{ const a=drv[Math.max(0,k-1)], b=drv[Math.min(drv.length-1,k+1)]; return b.t>a.t ? (b.hand-a.hand)/(b.t-a.t) : 0; });
+    strokes.push({ c:C.t, f:Fi.t, c2:fr[c2].t, driveT:Fi.t-C.t, recT:fr[c2].t-Fi.t, rate:60/(fr[c2].t-C.t),
+      catchTrunk:C.trunk, finishTrunk:Fi.trunk, shin:C.shin, catchKnee:C.knee, finishElbow:Fi.elbow, len:Fi.hand-C.hand,
+      backEarly: back && leg50 ? T(back) < T(leg50) - 0.02 : false, armEarly: arm && vert ? T(arm) < T(vert) - 0.03 : !!(arm && !vert),
+      shoot, kneesEarly: kBend && hPast ? kBend.t < hPast.t - 0.03 : false, hv:resample(hv.map(v=>Math.max(0,v)),50) });
+  }
+  VID.frames = fr; VID.an = { strokes, dir, mpp, side: si ? 'right' : 'left' };
+  if (!strokes.length){ vStatus('Joints found, but no full strokes. Film at least 3 complete strokes from the side.'); }
+  else vStatus(`Found ${strokes.length} strokes. Lines show the ${VID.an.side} side of the body.`);
+  setupPlayback(); renderVideoResult();
+  if (VID.recStart) { VID.base = VID.recStart; }
+  if (pmStrokes().length) { $('vSyncPanel').classList.remove('hidden'); if (!VID.base) autoSync(); }
+  syncInfo(); drawOverlay();
+}
+
+function med(a){ const s=a.filter(x=>x!=null&&!isNaN(x)).sort((x,y)=>x-y); return s.length ? s[Math.floor(s.length/2)] : null; }
+function videoFindings(st){
+  const F = [], add=(sev,title,what,why,drill)=>F.push({sev,title,what,why,drill});
+  const share = k => st.filter(s=>s[k]).length/st.length;
+  const ct = med(st.map(s=>s.catchTrunk)), ft = med(st.map(s=>s.finishTrunk)), sh = med(st.map(s=>s.shin)), ratio = med(st.map(s=>s.recT/s.driveT)), rate = med(st.map(s=>s.rate)), shoot = med(st.map(s=>s.shoot));
+  if (share('backEarly') > 0.4) add(2,'Back opens before the legs are down',`In ${Math.round(share('backEarly')*100)} % of the strokes the body starts swinging back before the knees are half flat.`,'The legs lose their connection to the handle and the back has to do the work. On the force curve this often shows as a late peak or two humps.','<b>Drill:</b> legs-only strokes, then "legs, then body" with the arms long. Hold the body angle until the hands pass the knees.');
+  if (shoot < 0.6) add(2,'Slide shooting',`In the first third of the drive the handle moves only ${Math.round(shoot*100)} % as far as the seat.`,'The seat runs away from the handle: the legs push but the back gives way, so the force never reaches the handle.','<b>Drill:</b> pause at the catch, then push with the legs and feel the handle move at the same speed as the seat. Pick drill: catch at half slide.');
+  if (share('armEarly') > 0.4) add(1,'Arms bend early',`In ${Math.round(share('armEarly')*100)} % of the strokes the elbows bend before the body has passed vertical.`,'Pulling with the arms early shortens the drive and moves load from the strong legs to the weak arms.','<b>Drill:</b> "long arms" — keep the arms straight like ropes until the back has opened, then draw.');
+  if (share('kneesEarly') > 0.4) add(1,'Knees come up before the hands pass them',`In ${Math.round(share('kneesEarly')*100)} % of the strokes the knees bend before the hands are past them.`,'The hands have to lift over the knees and the recovery gets out of order.','<b>Drill:</b> recovery order "arms, body, slide" — pause with arms away and body over, then let the knees rise.');
+  if (ct != null && ct < 12) add(1,'Little body swing at the catch',`Body angle at the catch about ${Math.round(ct)}° forward (aim for 20–30°, "1 o'clock").`,'Without the forward swing the catch is short and the back can not add to the drive.','<b>Drill:</b> arms-and-body only with a clear swing forward from the hips, then add the slide.');
+  if (ct != null && ct > 36) add(1,'Over-reaching at the catch',`Body angle at the catch about ${Math.round(ct)}° forward (aim for 20–30°).`,'Reaching too far rounds the back and puts the lower back in a weak position at the hardest part of the stroke.','<b>Drill:</b> set the body angle at the finish of the recovery\'s body-over and keep it up the slide.');
+  if (sh != null && sh > 10) add(1,'Over-compressed at the catch',`The knees are about ${Math.round(sh)}° past vertical at the catch.`,'Coming too far up the slide puts the knees past the ankles and the legs in a weak position.','<b>Drill:</b> stop at shins vertical. Try moving the footstretcher one hole towards the stern (see RigCoach).');
+  if (sh != null && sh < -12) add(1,'Not coming far enough forward',`The shins are about ${Math.round(-sh)}° short of vertical at the catch.`,'The stroke is shorter than it needs to be.','<b>Drill:</b> reach the catch with shins vertical and the arms long, then push.');
+  if (ft != null && ft > -6) add(1,'Little layback at the finish',`Body angle at the finish about ${Math.round(-ft)}° back (aim for 10–25°, "11 o'clock").`,'Without the body swing the back adds nothing at the end of the drive.','<b>Drill:</b> legs + body only, finish leaning slightly back with the core engaged.');
+  if (ft != null && ft < -32) add(1,'Too much layback',`Body angle at the finish about ${Math.round(-ft)}° back (aim for 10–25°).`,'Lying back costs time and makes the recovery heavy.','<b>Drill:</b> finish at "11 o\'clock" and let the hands lead out.');
+  if (ratio && rate < 28 && ratio < 1.6) add(1,'Rushing the slide',`Recovery is ${fmt(ratio,1)} × the drive at rate ${Math.round(rate)}.`,'Speeding up the slide costs energy and makes the catch rushed.','<b>Drill:</b> rate 18, count 1 on the drive and 1-2-3 on the recovery.');
+  if (!F.length) add(0,'Sequence looks good','Legs, body and arms come in the right order and the catch and finish positions are within the normal range.','Keep it as the rate goes up.','<b>Next:</b> film at rate 24 and 28 and compare.');
+  return { F:F.sort((a,b)=>b.sev-a.sev), ct, ft, sh, ratio, rate, len:med(st.map(s=>s.len)) };
+}
+function renderVideoResult(){
+  const st = VID.an && VID.an.strokes || [], el = $('vResult');
+  if (!st.length){ el.classList.add('hidden'); return; }
+  const r = videoFindings(st);
+  el.classList.remove('hidden');
+  el.innerHTML = `<h2>What the video shows · ${st.length} strokes</h2>
+    <div class="chips">
+      <div class="chip"><div class="cv">${r.rate?Math.round(r.rate):'–'}</div><div class="cl">strokes / min</div></div>
+      <div class="chip ${r.ratio<1.6&&r.rate<28?'warn':''}"><div class="cv">1 : ${fmt(r.ratio,1)}</div><div class="cl">drive : recovery</div></div>
+      <div class="chip ${r.ct<12||r.ct>36?'warn':''}"><div class="cv">${fmt(r.ct,0)}°</div><div class="cl">body forward at catch · 20–30°</div></div>
+      <div class="chip ${r.ft>-6||r.ft<-32?'warn':''}"><div class="cv">${fmt(-r.ft,0)}°</div><div class="cl">layback at finish · 10–25°</div></div>
+      <div class="chip ${r.sh>10||r.sh<-12?'warn':''}"><div class="cv">${r.sh>0?'+':''}${fmt(r.sh,0)}°</div><div class="cl">shin at catch · 0° = vertical</div></div>
+      <div class="chip"><div class="cv">${fmt(r.len,2)} m</div><div class="cl">handle travel (from height)</div></div>
+    </div>
+    <div style="margin-top:14px">${r.F.map(f=>`<div class="find"><h3>${esc(f.title)}${f.sev?`<span class="sev ${f.sev>1?'hi':''}">${f.sev>1?'work on this':'check'}</span>`:''}</h3><p>${f.what}</p><p style="color:var(--ink-mid)">${f.why}</p><div class="drill">${f.drill}</div></div>`).join('')}</div>
+    <div class="tblWrap" style="margin-top:12px"><table><tr><th>#</th><th>rate</th><th>ratio</th><th>catch°</th><th>finish°</th><th>shin°</th><th>order</th></tr>
+    ${st.map((s,i)=>`<tr data-go="${s.c}"><td>${i+1}</td><td>${Math.round(s.rate)}</td><td>${fmt(s.recT/s.driveT,1)}</td><td>${fmt(s.catchTrunk,0)}</td><td>${fmt(-s.finishTrunk,0)}</td><td>${fmt(s.shin,0)}</td><td class="${s.backEarly||s.armEarly||s.shoot<0.6?'off':'ok'}">${[s.backEarly?'back':'' , s.armEarly?'arms':'', s.shoot<0.6?'shoot':''].filter(Boolean).join(' ')||'ok'}</td></tr>`).join('')}</table></div>
+    <p class="hint">Angles are measured in the picture, so film straight from the side. Tap a row to jump to that catch.</p>`;
+  el.querySelectorAll('[data-go]').forEach(r=>r.onclick=()=>{ goTo(+r.dataset.go); window.scrollTo({top:0,behavior:'smooth'}); });
+}
+
+// --- playback with lines on the joints ---
+function setupPlayback(){
+  $('vPlay').classList.remove('hidden');
+  vid.playbackRate = 0.5;
+  vid.ontimeupdate = ()=>{ if (vid.paused) drawOverlay(); };
+  vid.onplay = ()=>{ $('vPP').textContent='Pause'; loop(); };
+  vid.onpause = ()=>{ $('vPP').textContent='Play'; cancelAnimationFrame(VID.raf); drawOverlay(); };
+  vid.onseeked = ()=>drawOverlay();
+}
+function loop(){ drawOverlay(); if (!vid.paused) VID.raf = requestAnimationFrame(loop); }
+function goTo(t){ vid.pause(); vid.currentTime = clamp(t,0,vid.duration||t); }
+$('vPP').onclick = ()=>{ if (vid.paused) vid.play(); else vid.pause(); };
+$('vBack').onclick = ()=>goTo(vid.currentTime-1/30);
+$('vFwd').onclick = ()=>goTo(vid.currentTime+1/30);
+$('vPrevC').onclick = ()=>{ const cs=(VID.an?.strokes||[]).map(s=>s.c).filter(c=>c<vid.currentTime-0.05); if (cs.length) goTo(cs[cs.length-1]); };
+$('vNextC').onclick = ()=>{ const c=(VID.an?.strokes||[]).map(s=>s.c).find(c=>c>vid.currentTime+0.05); if (c!=null) goTo(c); };
+$('vScrub').oninput = ()=>{ if (vid.duration) goTo($('vScrub').value/1000*vid.duration); };
+$('vSpeed').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{ vid.playbackRate=+b.dataset.s; $('vSpeed').querySelectorAll('[data-s]').forEach(x=>x.classList.toggle('active',x===b)); });
+$('vOv').onclick = ()=>{ VID.overlay=!VID.overlay; $('vOv').classList.toggle('active',VID.overlay); drawOverlay(); };
+
+function frameAt(t){
+  const fr = VID.frames; if (!fr.length) return null;
+  let k = fr.findIndex(f=>f.t>=t); if (k<=0) return fr[Math.max(0,k)]; if (k<0) return fr[fr.length-1];
+  const a = fr[k-1], b = fr[k], u = (t-a.t)/((b.t-a.t)||1), o = {t};
+  for (const key in a) if (Array.isArray(a[key])) o[key] = [a[key][0]*(1-u)+b[key][0]*u, a[key][1]*(1-u)+b[key][1]*u]; else if (typeof a[key]==='number') o[key] = a[key]*(1-u)+b[key]*u;
+  return o;
+}
+function strokeAt(t){ return (VID.an?.strokes||[]).find(s=>t>=s.c && t<s.c2); }
+function drawOverlay(){
+  const t = vid.currentTime || 0;
+  if (vid.duration) { $('vScrub').value = Math.round(t/vid.duration*1000); $('vT').textContent = fmt(t,2)+' s'; }
+  const W = VID.W || vid.videoWidth, H = VID.H || vid.videoHeight; if (!W) return;
+  if (vcan.width!==W) { vcan.width=W; vcan.height=H; }
+  const g = vcan.getContext('2d'); g.clearRect(0,0,W,H);
+  const s = strokeAt(t), i = s ? (VID.an.strokes.indexOf(s)+1) : 0;
+  $('vPhase').textContent = s ? `stroke ${i} · ${t < s.f ? 'drive' : 'recovery'}` : '';
+  if (VID.overlay && VID.frames.length){
+    const f = frameAt(t); if (f){
+      const lw = Math.max(3, W/220), seg = (a,b)=>{ g.beginPath(); g.moveTo(...f[a]); g.lineTo(...f[b]); g.stroke(); };
+      // handle path, last 1.2 s
+      const trail = VID.frames.filter(x=>x.t<=t && x.t>t-1.2);
+      if (trail.length>1){ g.strokeStyle='rgba(255,255,255,0.7)'; g.lineWidth=lw*0.6; g.setLineDash([lw,lw]); g.beginPath(); trail.forEach((x,k)=>k?g.lineTo(...x.wr):g.moveTo(...x.wr)); g.stroke(); g.setLineDash([]); }
+      const pairs = [['sh','el'],['el','wr'],['sh','hip'],['hip','kn'],['kn','an'],['an','ft']];
+      g.lineCap='round'; g.strokeStyle='#fff'; g.lineWidth=lw*2.2; pairs.forEach(p=>seg(...p));
+      g.strokeStyle=MG; g.lineWidth=lw; pairs.forEach(p=>seg(...p));
+      // vertical reference at the hip and the body line extended
+      g.strokeStyle='rgba(255,255,255,0.85)'; g.lineWidth=lw*0.5; g.setLineDash([lw*1.5,lw]); g.beginPath(); g.moveTo(f.hip[0], f.hip[1]); g.lineTo(f.hip[0], f.hip[1]-dist(f.hip,f.sh)*1.1); g.stroke(); g.setLineDash([]);
+      for (const k of ['sh','el','wr','hip','kn','an']){ g.beginPath(); g.arc(...f[k], lw*1.3, 0, 7); g.fillStyle='#fff'; g.fill(); g.lineWidth=lw*0.6; g.strokeStyle=IK; g.stroke(); }
+      const label = (p,txt,dx,dy)=>{ const fs=Math.max(14,W/48); g.font=`700 ${fs}px Chivo Mono, monospace`; const w=g.measureText(txt).width+fs*0.6; const x=p[0]+dx*fs, y=p[1]+dy*fs; g.fillStyle='rgba(255,255,255,0.92)'; g.fillRect(x, y-fs, w, fs*1.35); g.fillStyle=IK; g.fillText(txt, x+fs*0.3, y+fs*0.05); };
+      const d = VID.an ? VID.an.dir : 1;
+      label(f.kn, `knee ${Math.round(ang3(f.hip,f.kn,f.an))}°`, d>0?0.6:-6.5, -0.6);
+      const tr = deg(Math.atan2(d*(f.sh[0]-f.hip[0]), f.hip[1]-f.sh[1]));
+      label(f.hip, `body ${tr>=0?Math.round(tr)+'° fwd':Math.round(-tr)+'° back'}`, d>0?-9:0.8, 1.6);
+      label(f.el, `arm ${Math.round(ang3(f.sh,f.el,f.wr))}°`, d>0?-6:0.6, -0.8);
+    }
+  }
+  if (s && Math.abs(t-s.c)<0.06) tag(g,'CATCH',W); else if (s && Math.abs(t-s.f)<0.06) tag(g,'FINISH',W);
+  drawSync(s);
+}
+function tag(g,txt,W){ const fs=Math.max(18,W/30); g.font=`900 ${fs}px Chivo Mono, monospace`; g.fillStyle=MG; g.fillRect(fs*0.5, fs*0.5, g.measureText(txt).width+fs, fs*1.5); g.fillStyle='#fff'; g.fillText(txt, fs, fs*1.55); }
+
+// --- link the video to the PM5 force curves ---
+function pmStrokes(){ if (LIVE.strokes.length) return LIVE.strokes; const s = S.sessions[0]; return s ? unpack(s) : []; }
+function pmAt(videoFinish){ const ps = pmStrokes(); if (!ps.length || VID.base==null) return null; const at = VID.base + (videoFinish + (+$('vOffset').value||0))*1000; let best=null, bd=1e9; for (const p of ps){ const d=Math.abs(p.t-at); if (d<bd){ bd=d; best=p; } } return bd<1200 ? best : null; }
+function autoSync(){
+  const ps = pmStrokes(), st = VID.an?.strokes||[]; if (!ps.length || !st.length) return;
+  let best = null, bs = 1e12;
+  for (const s of st.slice(0,5)) for (const p of ps){ const base = p.t - s.f*1000; const sc = mean(st.map(x=>{ const at=base+x.f*1000; return Math.min(1500, Math.min(...ps.map(q=>Math.abs(q.t-at)))); })); if (sc<bs){ bs=sc; best=base; } }
+  VID.base = best; $('vOffset').value = 0; syncInfo(); drawOverlay();
+  toast(bs<300 ? 'Video aligned with the PM5 strokes' : 'Rough alignment — fine-tune the offset');
+}
+$('vAutoSync').onclick = autoSync;
+$('vOffset').oninput = ()=>drawOverlay();
+function syncInfo(){ const ps = pmStrokes(); $('vSyncInfo').textContent = !ps.length ? 'no PM5 strokes yet' : VID.recStart && LIVE.strokes.length ? 'recorded here, synced by clock' : `${ps.length} PM5 strokes from ${LIVE.strokes.length?'this session':'the last saved session'}`; }
+function drawSync(s){
+  if ($('vSyncPanel').classList.contains('hidden')) return;
+  const p = s ? pmAt(s.f) : null, el = $('vForce');
+  if (!s){ el.innerHTML = '<p class="hint">Move to a stroke to compare.</p>'; return; }
+  const curves = [], pk = p && p.curve ? Math.max(...p.curve) : 0;
+  if (p && p.curve) curves.push({data:resample(p.curve,50), col:MG, w:3});
+  const vmax = Math.max(...s.hv) || 1, scale = (pk || 500)/vmax;
+  curves.push({data:s.hv.map(v=>v*scale), col:IK, w:2});
+  const t = vid.currentTime, x = clamp((t-s.c)/(s.f-s.c),0,1);
+  el.innerHTML = forceChart(curves, {h:180, marks: t<=s.f ? [{x, t:'now'}] : []}) +
+    `<p class="hint">${p ? `PM5 peak ${Math.round(pk)} N · handle speed peak ${fmt(vmax,2)} m/s. Where the black line keeps rising after the pink one falls, the handle is moving without pressure — that is where force is lost.` : 'No PM5 stroke matched this one. Use <b>Auto-align</b> or adjust the offset.'}</p>`;
+}
+
+// ---------- workouts (step plans), stroke judging, avatars, badge art, rowing style ----------
+const FOCUS = {
+  shape: { t:'Shape',  d:'Match the target curve' },
+  rate:  { t:'Rhythm', d:'Hit the notes: stay on the stroke rate' },
+  power: { t:'Power',  d:'Hold the power band, keep the shape' },
+  easy:  { t:'Easy',   d:'Breathe, row light, no scoring' },
+};
+const PLANS = [
+  { id:'shape', name:'Shape school', d:'Learn the force curve, then keep it as rate and pressure go up.', steps:[
+    { n:'Warm-up', type:'time', v:300, focus:'easy', rate:[18,20] },
+    { n:'Find the shape', type:'time', v:240, focus:'shape', rate:[18,20] },
+    { n:'Easy', type:'time', v:60, focus:'easy', rate:[18,20] },
+    { n:'Shape at pace', type:'time', v:240, focus:'shape', rate:[20,22] },
+    { n:'Easy', type:'time', v:60, focus:'easy', rate:[18,20] },
+    { n:'Shape under pressure', type:'time', v:180, focus:'power', rate:[24,26], pw:[100,110] },
+    { n:'Cool-down', type:'time', v:180, focus:'easy', rate:[18,20] } ] },
+  { id:'ladder', name:'Rhythm ladder', d:'Climb the rates one step at a time. Every stroke is a note.', steps:[
+    { n:'Warm-up', type:'time', v:240, focus:'easy', rate:[18,20] },
+    { n:'Rate 18', type:'time', v:120, focus:'rate', rate:[18,18] }, { n:'Rate 20', type:'time', v:120, focus:'rate', rate:[20,20] },
+    { n:'Rate 22', type:'time', v:120, focus:'rate', rate:[22,22] }, { n:'Rate 24', type:'time', v:120, focus:'rate', rate:[24,24] },
+    { n:'Rate 26', type:'time', v:60, focus:'rate', rate:[26,26] }, { n:'Cool-down', type:'time', v:180, focus:'easy', rate:[18,20] } ] },
+  { id:'p250', name:'Power 6 × 250 m', d:'Short, hard pieces. Points for power inside your own band with a clean curve.', steps:[
+    { n:'Warm-up', type:'time', v:300, focus:'easy', rate:[18,22] },
+    ...Array.from({length:6}, (_,i)=>[{ n:`250 m · ${i+1} of 6`, type:'dist', v:250, focus:'power', rate:[28,32], pw:[115,135] }, { n:'Rest', type:'time', v:90, focus:'easy', rate:[16,20] }]).flat(),
+    { n:'Cool-down', type:'time', v:180, focus:'easy', rate:[18,20] } ] },
+  { id:'steady', name:'Steady 20', d:'Twenty minutes of UT2 with the shape on. Long combos win here.', steps:[
+    { n:'Warm-up', type:'time', v:180, focus:'easy', rate:[18,20] }, { n:'Steady state', type:'time', v:1200, focus:'shape', rate:[18,20] }, { n:'Cool-down', type:'time', v:120, focus:'easy', rate:[18,20] } ] },
+  { id:'demo', name:'Quick demo · 3 min', d:'One short step of each kind, to try the system.', steps:[
+    { n:'Warm-up', type:'time', v:20, focus:'easy', rate:[18,22] }, { n:'Find the shape', type:'time', v:45, focus:'shape', rate:[20,24] },
+    { n:'Rhythm', type:'time', v:40, focus:'rate', rate:[22,22] }, { n:'Power band', type:'time', v:40, focus:'power', rate:[22,26], pw:[95,115] }, { n:'Cool-down', type:'time', v:20, focus:'easy', rate:[18,20] } ] },
+];
+const stepTarget = st => `${st.rate ? (st.rate[0]===st.rate[1] ? `rate ${st.rate[0]}` : `rate ${st.rate[0]}–${st.rate[1]}`) : ''}${st.pw ? ` · ${st.pw[0]}–${st.pw[1]}% of your normal` : ''}`;
+const stepLen = st => st.type==='dist' ? `${st.v} m` : fmtTime(st.v).replace(/\.\d$/,'');
+
+// ---- judging one stroke ----
+const GRADES = ['MISS','GOOD','GREAT','PERFECT'], GCOL = ['#9a8f99','#2f8a8c','#7aa36b','#ffb547'], GPTS = [0,40,70,100];
+function shapeGrade(curve){
+  if (!curve || curve.length < 6) return null;
+  const r = smooth3(resample(curve, IDEAL.length)), c = pearson(r, IDEAL), m = curveMetrics(curve), pp = m ? m.peakPos : 0.4;
+  const off = Math.max(0, Math.abs(pp - 0.41) - 0.05);                       // peak 36–46% is free
+  const q = c - off*0.6 - (m && m.humps ? 0.03 : 0);
+  return { g: q>=0.967 ? 3 : q>=0.94 ? 2 : q>=0.86 ? 1 : 0, q, pp };
+}
+function rateGrade(rate, tr){ if (!tr || !rate) return null; const lo = tr[0]-0.5, hi = tr[1]+0.5, d = rate<lo ? lo-rate : rate>hi ? rate-hi : 0; return { g: d===0 ? 3 : d<=1 ? 2 : d<=2 ? 1 : 0, d:rate<lo?-d:d }; }
+function powerGrade(w, normal, pw){ if (!pw || !w || !normal) return null; const p = w/normal*100, d = p<pw[0] ? pw[0]-p : p>pw[1] ? p-pw[1] : 0; return { g: d===0 ? 3 : d<=4 ? 2 : d<=9 ? 1 : 0, p }; }
+function judge(s, step, normal){
+  if (!step || step.focus==='easy') return null;
+  const sh = shapeGrade(s.curve), ra = rateGrade(s.rate, step.rate), pw = powerGrade(s.power, normal, step.pw);
+  let g, why = '';
+  if (step.focus==='rate') g = ra ? ra.g : 0;
+  else if (step.focus==='power') g = Math.round(0.6*(pw?pw.g:sh?sh.g:0) + 0.4*(sh?sh.g:0) - 0.01);
+  else g = Math.round(0.75*(sh?sh.g:0) + 0.25*(ra?ra.g:3) - 0.01);
+  if (sh && sh.g<2 && step.focus!=='rate') why = sh.pp>0.47 ? 'Legs first: peak comes late' : sh.pp<0.33 ? 'Smoother catch: peak too early' : 'Keep the push even';
+  else if (ra && ra.g<2) why = ra.d<0 ? 'Rate up a little' : 'Rate down a little';
+  else if (pw && pw.g<2) why = pw.p < step.pw[0] ? 'A bit more pressure' : 'Ease off, stay in the band';
+  return { g, why, sh, ra, pw };
+}
+// combo, multiplier and score for a run of judged strokes
+function newRun(){ return { score:0, combo:0, maxCombo:0, n:0, hits:[0,0,0,0], streakP:0, maxP:0, onBeat:0, maxBeat:0 }; }
+function scoreStroke(R, j){
+  R.n++; R.hits[j.g]++;
+  R.combo = j.g ? R.combo+1 : 0; R.maxCombo = Math.max(R.maxCombo, R.combo);
+  R.streakP = j.g===3 ? R.streakP+1 : 0; R.maxP = Math.max(R.maxP, R.streakP);
+  R.onBeat = j.ra && j.ra.g===3 ? R.onBeat+1 : 0; R.maxBeat = Math.max(R.maxBeat, R.onBeat);
+  const mult = Math.min(4, 1 + Math.floor(R.combo/10)); R.score += GPTS[j.g]*mult; R.mult = mult;
+  R.acc = (R.hits[1]*0.4 + R.hits[2]*0.7 + R.hits[3]) / R.n;
+  return R;
+}
+
+// ---- avatars: rubber-hose rower heads ----
+const AV_CAPS = ['#c8352b','#2f6f86','#e0a526','#5b8c3a','#8a4f9e','#d9762b','#3d5a9e','#a83a62','#1b130d','#e8e0cc'];
+const AV_SKIN = ['#f3d9b1','#e2b98f','#c48c62','#8d5a3b','#5e3a24'];
+const AV_FACE = ['Grin','Grit','Whistle','Cool','Wink'], AV_ACC = ['None','Headband','Moustache','Glasses','Bow','Sweat'];
+const avDefault = id => { let h=0; for (const ch of String(id)) h = (h*31 + ch.charCodeAt(0))>>>0; return { c:h%8, s:(h>>>3)%5, f:(h>>>6)%5, a:(h>>>9)%6 }; };
+function avatarSVG(av, size=72){
+  av = av || {}; const cap = AV_CAPS[av.c||0], skin = AV_SKIN[av.s||0], I = '#1b130d';
+  const eyes = av.f===3 ? `<rect x="28" y="40" width="44" height="12" rx="5" fill="${I}"/><rect x="33" y="42" width="8" height="3" fill="#fff"/>`
+    : av.f===4 ? `<ellipse cx="40" cy="45" rx="8" ry="12" fill="#fff" stroke="${I}" stroke-width="2.5"/><ellipse cx="40" cy="46" rx="5" ry="9" fill="${I}"/><path d="M54 47 q6 -5 12 0" stroke="${I}" stroke-width="4" fill="none" stroke-linecap="round"/>`
+    : `<ellipse cx="40" cy="45" rx="8" ry="12" fill="#fff" stroke="${I}" stroke-width="2.5"/><ellipse cx="60" cy="45" rx="8" ry="12" fill="#fff" stroke="${I}" stroke-width="2.5"/><ellipse cx="40" cy="46" rx="5" ry="9" fill="${I}"/><ellipse cx="60" cy="46" rx="5" ry="9" fill="${I}"/><path d="M40 46 L37 38 A9 9 0 0 1 42 37.6Z" fill="#fff"/><path d="M60 46 L57 38 A9 9 0 0 1 62 37.6Z" fill="#fff"/>`;
+  const mouth = av.f===1 ? `<path d="M37 66 h26" stroke="${I}" stroke-width="4" stroke-linecap="round"/><path d="M40 63 v6 M47 63 v6 M54 63 v6 M60 63 v6" stroke="${I}" stroke-width="2"/>`
+    : av.f===2 ? `<circle cx="52" cy="66" r="5" fill="${I}"/>`
+    : `<path d="M34 61 Q50 78 66 61" stroke="${I}" stroke-width="4" fill="#fff" stroke-linejoin="round"/>`;
+  const acc = [ '',
+    `<rect x="16" y="30" width="68" height="9" rx="3" fill="#fff" stroke="${I}" stroke-width="3"/><path d="M16 34 l-8 6 M16 34 l-9 -2" stroke="${I}" stroke-width="3"/>`,
+    `<path d="M33 60 q8 -7 17 0 q9 -7 17 0 q-8 6 -17 2 q-9 4 -17 -2z" fill="${I}"/>`,
+    `<circle cx="40" cy="46" r="11" fill="none" stroke="${I}" stroke-width="3.5"/><circle cx="62" cy="46" r="11" fill="none" stroke="${I}" stroke-width="3.5"/><path d="M51 45 h0" stroke="${I}" stroke-width="3.5"/>`,
+    `<path d="M50 74 l-10 -6 v13 z M50 74 l10 -6 v13 z" fill="${cap}" stroke="${I}" stroke-width="2.5" stroke-linejoin="round"/><circle cx="50" cy="74" r="3" fill="${I}"/>`,
+    `<path d="M80 34 q5 8 0 11 q-5 -3 0 -11z" fill="#bfe3ef" stroke="${I}" stroke-width="2"/>` ][av.a||0];
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="av"><circle cx="50" cy="52" r="38" fill="${skin}" stroke="${I}" stroke-width="4"/>
+    <path d="M13 46 A38 38 0 0 1 87 46 Z" fill="${cap}" stroke="${I}" stroke-width="4" stroke-linejoin="round"/><path d="M84 44 q12 1 14 7 q-8 1 -16 -2" fill="${cap}" stroke="${I}" stroke-width="3.5" stroke-linejoin="round"/>
+    ${(av.a===1)?'':''}${eyes}${mouth}${acc}</svg>`;
+}
+
+// ---- badge art (rosettes with an icon, Freeletics-style collection) ----
+const BADGE_ART = {
+  first:['flag','#5b8c3a'], ten:['boat','#2f6f86'], fifty:['boat','#3d5a9e'], km100:['wave','#2f6f86'], km500:['wave','#3d5a9e'], pb:['bolt','#c8352b'],
+  smooth:['curve','#8a4f9e'], early:['curve','#d9762b'], streak3:['flame','#d9762b'], streak8:['flame','#c8352b'], zone60:['heart','#a83a62'],
+  combo25:['star','#e0a526'], combo50:['star','#c8352b'], sharp:['target','#5b8c3a'], finisher:['flag','#3d5a9e'], metronome:['metro','#2f6f86'], perfect10:['crown','#e0a526'],
+};
+const ICONS = {
+  flag:'<path d="M42 30 v42" stroke-width="5"/><path d="M42 31 q14 -6 24 2 v16 q-10 -8 -24 -2z" fill="#f8eed5"/>',
+  boat:'<path d="M26 54 q24 14 48 0 l-4 -4 q-20 8 -40 0z" fill="#f8eed5"/><path d="M44 28 l14 24" stroke-width="4"/><circle cx="46" cy="36" r="6" fill="#f8eed5"/>',
+  wave:'<path d="M26 44 q6 -8 12 0 t12 0 t12 0 t12 0 M26 58 q6 -8 12 0 t12 0 t12 0 t12 0" fill="none" stroke-width="5"/>',
+  bolt:'<path d="M55 24 l-18 30 h12 l-6 24 l20 -32 h-12z" fill="#f8eed5"/>',
+  curve:'<path d="M28 66 q8 -40 22 -40 t22 40" fill="none" stroke-width="6"/><path d="M28 66 h44" stroke-width="3"/>',
+  flame:'<path d="M50 24 q16 18 10 32 q-2 -8 -8 -10 q2 12 -8 18 q-12 -8 -6 -22 q2 8 6 8 q-6 -14 6 -26z" fill="#f8eed5"/>',
+  heart:'<path d="M50 70 q-24 -16 -20 -30 q4 -12 20 -4 q16 -8 20 4 q4 14 -20 30z" fill="#f8eed5"/>',
+  star:'<path d="M50 24 l7 15 l16 2 l-12 11 l3 16 l-14 -8 l-14 8 l3 -16 l-12 -11 l16 -2z" fill="#f8eed5"/>',
+  target:'<circle cx="50" cy="48" r="20" fill="#f8eed5"/><circle cx="50" cy="48" r="11" fill="none" stroke-width="4"/><circle cx="50" cy="48" r="3" fill="#1b130d"/>',
+  metro:'<path d="M40 70 l6 -44 h8 l6 44z" fill="#f8eed5"/><path d="M50 62 l12 -26" stroke-width="4"/><circle cx="62" cy="36" r="4" fill="#1b130d"/>',
+  crown:'<path d="M28 62 l-2 -28 l12 12 l12 -18 l12 18 l12 -12 l-2 28z" fill="#f8eed5"/>',
+};
+function badgeSVG(key, on=true, size=64){
+  const [ic, col] = BADGE_ART[key] || ['star','#e0a526'], c = on ? col : '#cfc4ad', I = on ? '#1b130d' : '#a89c84';
+  let sc = ''; for (let i=0;i<16;i++){ const a = i/16*Math.PI*2; sc += `<circle cx="${50+36*Math.cos(a)}" cy="${48+36*Math.sin(a)}" r="9"/>`; }
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="bdg${on?'':' off'}">
+    <path d="M34 72 l-8 24 l10 -5 l6 8 l8 -22z M66 72 l8 24 l-10 -5 l-6 8 l-8 -22z" fill="${on?'#c8352b':'#ddd3bd'}" stroke="${I}" stroke-width="3" stroke-linejoin="round"/>
+    <g fill="${c}" stroke="${I}" stroke-width="3">${sc}</g><circle cx="50" cy="48" r="36" fill="${c}"/>
+    <circle cx="50" cy="48" r="29" fill="${c}" stroke="${I}" stroke-width="3"/><circle cx="50" cy="48" r="25" fill="none" stroke="${on?'#f8eed5':'#e8dfcb'}" stroke-width="1.5" stroke-dasharray="3 3"/>
+    <g stroke="${I}" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" transform="translate(0 2)">${ICONS[ic]}</g></svg>`;
+}
+
+// ---- rowing style and who you are like ----
+const STYLES = {
+  hammer:   { t:'The Hammer',    d:'Big, early hit off the catch. Watch that the finish does not fade.' },
+  diesel:   { t:'The Diesel',    d:'Full, even push from catch to finish. The textbook shape.' },
+  bloomer:  { t:'The Late Bloomer', d:'Force arrives late: the back and arms do the work. Push with the legs first.' },
+  metronome:{ t:'The Metronome', d:'Every stroke looks the same. Consistency is your weapon.' },
+  wildcard: { t:'The Wildcard',  d:'Lots of different strokes. Find one shape and repeat it.' },
+};
+function styleOf(f){ if (!f) return null;
+  if (f.cv > 0.11 || f.hump > 0.35) return 'wildcard';
+  if (f.pp < 0.37) return 'hammer'; if (f.pp > 0.47) return 'bloomer';
+  if (f.cv < 0.05) return 'metronome'; return 'diesel'; }
+// features from saved sessions plus (optionally) this workout's strokes
+function featuresOf(sessions, live){
+  const e = sessions.filter(s=>isErg(s) && s.summary && s.summary.peakPos!=null).slice(0,12);
+  const pick = k => e.map(s=>s.summary[k]).filter(v=>v!=null);
+  const f = { pp:mean(pick('peakPos')), pu:mean(pick('pickup')), hump:mean(pick('humpShare')), cv:mean(pick('cv')), w:median(e.map(s=>s.avg_power).filter(Boolean)) || 0, rate:mean(e.map(s=>s.avg_rate).filter(Boolean)) || 20, n:e.length };
+  if (live){ for (const k of ['pp','pu','hump','cv']) if (live[k]!=null) f[k] = f.n ? (f[k]*0.6 + live[k]*0.4) : live[k]; if (live.w) f.w = f.w ? (f.w+live.w)/2 : live.w; if (live.rate) f.rate = live.rate; }
+  return (f.pp || f.n) ? f : null;
+}
+function likeness(a, b, ba, bb){
+  const d = Math.hypot((a.pp-b.pp)/0.06, (a.pu-b.pu)/0.06, (a.hump-b.hump)/0.25, (a.cv-b.cv)/0.06, (Math.log((a.w||200)/(b.w||200)))/0.25, (a.rate-b.rate)/3);
+  const ka = new Set(ba||[]), kb = new Set(bb||[]), uni = new Set([...ka,...kb]).size, inter = [...ka].filter(x=>kb.has(x)).length, jac = uni ? inter/uni : 0.5;
+  return Math.round(100 * (0.8*Math.exp(-d*d/8) + 0.2*jac));
+}
+
+(()=>{var v=function(w,x){let s=w,l=j[x],e=null,t=0,u=null,p=[],y={},h=function(r,c){t=s*4+17,e=(function(n){let f=new Array(n);for(let i=0;i<n;i+=1){f[i]=new Array(n);for(let g=0;g<n;g+=1)f[i][g]=null}return f})(t),a(0,0),a(t-7,0),a(0,t-7),D(),P(),I(r,c),s>=7&&E(r),u==null&&(u=$(s,l,p)),m(u,c)},a=function(r,c){for(let n=-1;n<=7;n+=1)if(!(r+n<=-1||t<=r+n))for(let f=-1;f<=7;f+=1)c+f<=-1||t<=c+f||(0<=n&&n<=6&&(f==0||f==6)||0<=f&&f<=6&&(n==0||n==6)||2<=n&&n<=4&&2<=f&&f<=4?e[r+n][c+f]=!0:e[r+n][c+f]=!1)},_=function(){let r=0,c=0;for(let n=0;n<8;n+=1){h(!0,n);let f=O.getLostPoint(y);(n==0||r>f)&&(r=f,c=n)}return c},P=function(){for(let r=8;r<t-8;r+=1)e[r][6]==null&&(e[r][6]=r%2==0);for(let r=8;r<t-8;r+=1)e[6][r]==null&&(e[6][r]=r%2==0)},D=function(){let r=O.getPatternPosition(s);for(let c=0;c<r.length;c+=1)for(let n=0;n<r.length;n+=1){let f=r[c],i=r[n];if(e[f][i]==null)for(let g=-2;g<=2;g+=1)for(let A=-2;A<=2;A+=1)g==-2||g==2||A==-2||A==2||g==0&&A==0?e[f+g][i+A]=!0:e[f+g][i+A]=!1}},E=function(r){let c=O.getBCHTypeNumber(s);for(let n=0;n<18;n+=1){let f=!r&&(c>>n&1)==1;e[Math.floor(n/3)][n%3+t-8-3]=f}for(let n=0;n<18;n+=1){let f=!r&&(c>>n&1)==1;e[n%3+t-8-3][Math.floor(n/3)]=f}},I=function(r,c){let n=l<<3|c,f=O.getBCHTypeInfo(n);for(let i=0;i<15;i+=1){let g=!r&&(f>>i&1)==1;i<6?e[i][8]=g:i<8?e[i+1][8]=g:e[t-15+i][8]=g}for(let i=0;i<15;i+=1){let g=!r&&(f>>i&1)==1;i<8?e[8][t-i-1]=g:i<9?e[8][15-i-1+1]=g:e[8][15-i-1]=g}e[t-8][8]=!r},m=function(r,c){let n=-1,f=t-1,i=7,g=0,A=O.getMaskFunction(c);for(let B=t-1;B>0;B-=2)for(B==6&&(B-=1);;){for(let M=0;M<2;M+=1)if(e[f][B-M]==null){let T=!1;g<r.length&&(T=(r[g]>>>i&1)==1),A(f,B-M)&&(T=!T),e[f][B-M]=T,i-=1,i==-1&&(g+=1,i=7)}if(f+=n,f<0||t<=f){f-=n,n=-n;break}}},Z=function(r,c){let n=0,f=0,i=0,g=new Array(c.length),A=new Array(c.length);for(let b=0;b<c.length;b+=1){let C=c[b].dataCount,L=c[b].totalCount-C;f=Math.max(f,C),i=Math.max(i,L),g[b]=new Array(C);for(let R=0;R<g[b].length;R+=1)g[b][R]=255&r.getBuffer()[R+n];n+=C;let Q=O.getErrorCorrectPolynomial(L),F=K(g[b],Q.getLength()-1).mod(Q);A[b]=new Array(Q.getLength()-1);for(let R=0;R<A[b].length;R+=1){let S=R+F.getLength()-A[b].length;A[b][R]=S>=0?F.getAt(S):0}}let B=0;for(let b=0;b<c.length;b+=1)B+=c[b].totalCount;let M=new Array(B),T=0;for(let b=0;b<f;b+=1)for(let C=0;C<c.length;C+=1)b<g[C].length&&(M[T]=g[C][b],T+=1);for(let b=0;b<i;b+=1)for(let C=0;C<c.length;C+=1)b<A[C].length&&(M[T]=A[C][b],T+=1);return M},$=function(r,c,n){let f=Y.getRSBlocks(r,c),i=G();for(let A=0;A<n.length;A+=1){let B=n[A];i.put(B.getMode(),4),i.put(B.getLength(),O.getLengthInBits(B.getMode(),r)),B.write(i)}let g=0;for(let A=0;A<f.length;A+=1)g+=f[A].dataCount;if(i.getLengthInBits()>g*8)throw"code length overflow. ("+i.getLengthInBits()+">"+g*8+")";for(i.getLengthInBits()+4<=g*8&&i.put(0,4);i.getLengthInBits()%8!=0;)i.putBit(!1);for(;!(i.getLengthInBits()>=g*8||(i.put(236,8),i.getLengthInBits()>=g*8));)i.put(17,8);return Z(i,f)};y.addData=function(r,c){c=c||"Byte";let n=null;switch(c){case"Numeric":n=V(r);break;case"Alphanumeric":n=q(r);break;case"Byte":n=z(r);break;case"Kanji":n=tt(r);break;default:throw"mode:"+c}p.push(n),u=null},y.isDark=function(r,c){if(r<0||t<=r||c<0||t<=c)throw r+","+c;return e[r][c]},y.getModuleCount=function(){return t},y.make=function(){if(s<1){let r=1;for(;r<40;r++){let c=Y.getRSBlocks(r,l),n=G();for(let i=0;i<p.length;i++){let g=p[i];n.put(g.getMode(),4),n.put(g.getLength(),O.getLengthInBits(g.getMode(),r)),g.write(n)}let f=0;for(let i=0;i<c.length;i++)f+=c[i].dataCount;if(n.getLengthInBits()<=f*8)break}s=r}h(!1,_())},y.createTableTag=function(r,c){r=r||2,c=typeof c>"u"?r*4:c;let n="";n+='<table style="',n+=" border-width: 0px; border-style: none;",n+=" border-collapse: collapse;",n+=" padding: 0px; margin: "+c+"px;",n+='">',n+="<tbody>";for(let f=0;f<y.getModuleCount();f+=1){n+="<tr>";for(let i=0;i<y.getModuleCount();i+=1)n+='<td style="',n+=" border-width: 0px; border-style: none;",n+=" border-collapse: collapse;",n+=" padding: 0px; margin: 0px;",n+=" width: "+r+"px;",n+=" height: "+r+"px;",n+=" background-color: ",n+=y.isDark(f,i)?"#000000":"#ffffff",n+=";",n+='"/>';n+="</tr>"}return n+="</tbody>",n+="</table>",n},y.createSvgTag=function(r,c,n,f){let i={};typeof arguments[0]=="object"&&(i=arguments[0],r=i.cellSize,c=i.margin,n=i.alt,f=i.title),r=r||2,c=typeof c>"u"?r*4:c,n=typeof n=="string"?{text:n}:n||{},n.text=n.text||null,n.id=n.text?n.id||"qrcode-description":null,f=typeof f=="string"?{text:f}:f||{},f.text=f.text||null,f.id=f.text?f.id||"qrcode-title":null;let g=y.getModuleCount()*r+c*2,A,B,M,T,b="",C;for(C="l"+r+",0 0,"+r+" -"+r+",0 0,-"+r+"z ",b+='<svg version="1.1" xmlns="http://www.w3.org/2000/svg"',b+=i.scalable?"":' width="'+g+'px" height="'+g+'px"',b+=' viewBox="0 0 '+g+" "+g+'" ',b+=' preserveAspectRatio="xMinYMin meet"',b+=f.text||n.text?' role="img" aria-labelledby="'+U([f.id,n.id].join(" ").trim())+'"':"",b+=">",b+=f.text?'<title id="'+U(f.id)+'">'+U(f.text)+"</title>":"",b+=n.text?'<description id="'+U(n.id)+'">'+U(n.text)+"</description>":"",b+='<rect width="100%" height="100%" fill="white" cx="0" cy="0"/>',b+='<path d="',M=0;M<y.getModuleCount();M+=1)for(T=M*r+c,A=0;A<y.getModuleCount();A+=1)y.isDark(M,A)&&(B=A*r+c,b+="M"+B+","+T+C);return b+='" stroke="transparent" fill="black"/>',b+="</svg>",b},y.createDataURL=function(r,c){r=r||2,c=typeof c>"u"?r*4:c;let n=y.getModuleCount()*r+c*2,f=c,i=n-c;return ot(n,n,function(g,A){if(f<=g&&g<i&&f<=A&&A<i){let B=Math.floor((g-f)/r),M=Math.floor((A-f)/r);return y.isDark(M,B)?0:1}else return 1})},y.createImgTag=function(r,c,n){r=r||2,c=typeof c>"u"?r*4:c;let f=y.getModuleCount()*r+c*2,i="";return i+="<img",i+=' src="',i+=y.createDataURL(r,c),i+='"',i+=' width="',i+=f,i+='"',i+=' height="',i+=f,i+='"',n&&(i+=' alt="',i+=U(n),i+='"'),i+="/>",i};let U=function(r){let c="";for(let n=0;n<r.length;n+=1){let f=r.charAt(n);switch(f){case"<":c+="&lt;";break;case">":c+="&gt;";break;case"&":c+="&amp;";break;case'"':c+="&quot;";break;default:c+=f;break}}return c},W=function(r){r=typeof r>"u"?2:r;let n=y.getModuleCount()*1+r*2,f=r,i=n-r,g,A,B,M,T,b={"\u2588\u2588":"\u2588","\u2588 ":"\u2580"," \u2588":"\u2584","  ":" "},C={"\u2588\u2588":"\u2580","\u2588 ":"\u2580"," \u2588":" ","  ":" "},L="";for(g=0;g<n;g+=2){for(B=Math.floor((g-f)/1),M=Math.floor((g+1-f)/1),A=0;A<n;A+=1)T="\u2588",f<=A&&A<i&&f<=g&&g<i&&y.isDark(B,Math.floor((A-f)/1))&&(T=" "),f<=A&&A<i&&f<=g+1&&g+1<i&&y.isDark(M,Math.floor((A-f)/1))?T+=" ":T+="\u2588",L+=r<1&&g+1>=i?C[T]:b[T];L+=`
+`}return n%2&&r>0?L.substring(0,L.length-n-1)+Array(n+1).join("\u2580"):L.substring(0,L.length-1)};return y.createASCII=function(r,c){if(r=r||1,r<2)return W(c);r-=1,c=typeof c>"u"?r*2:c;let n=y.getModuleCount()*r+c*2,f=c,i=n-c,g,A,B,M,T=Array(r+1).join("\u2588\u2588"),b=Array(r+1).join("  "),C="",L="";for(g=0;g<n;g+=1){for(B=Math.floor((g-f)/r),L="",A=0;A<n;A+=1)M=1,f<=A&&A<i&&f<=g&&g<i&&y.isDark(B,Math.floor((A-f)/r))&&(M=0),L+=M?T:b;for(B=0;B<r;B+=1)C+=L+`
+`}return C.substring(0,C.length-1)},y.renderTo2dContext=function(r,c){c=c||2;let n=y.getModuleCount();for(let f=0;f<n;f++)for(let i=0;i<n;i++)r.fillStyle=y.isDark(f,i)?"black":"white",r.fillRect(i*c,f*c,c,c)},y};v.stringToBytes=function(w){let x=[];for(let d=0;d<w.length;d+=1){let o=w.charCodeAt(d);x.push(o&255)}return x};v.createStringToBytes=function(w,x){let d=(function(){let s=nt(w),l=function(){let u=s.read();if(u==-1)throw"eof";return u},e=0,t={};for(;;){let u=s.read();if(u==-1)break;let p=l(),y=l(),h=l(),a=String.fromCharCode(u<<8|p),_=y<<8|h;t[a]=_,e+=1}if(e!=x)throw e+" != "+x;return t})(),o=63;return function(s){let l=[];for(let e=0;e<s.length;e+=1){let t=s.charCodeAt(e);if(t<128)l.push(t);else{let u=d[s.charAt(e)];typeof u=="number"?(u&255)==u?l.push(u):(l.push(u>>>8),l.push(u&255)):l.push(o)}}return l}};var k={MODE_NUMBER:1,MODE_ALPHA_NUM:2,MODE_8BIT_BYTE:4,MODE_KANJI:8},j={L:1,M:0,Q:3,H:2},N={PATTERN000:0,PATTERN001:1,PATTERN010:2,PATTERN011:3,PATTERN100:4,PATTERN101:5,PATTERN110:6,PATTERN111:7},O=(function(){let w=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50],[6,30,54],[6,32,58],[6,34,62],[6,26,46,66],[6,26,48,70],[6,26,50,74],[6,30,54,78],[6,30,56,82],[6,30,58,86],[6,34,62,90],[6,28,50,72,94],[6,26,50,74,98],[6,30,54,78,102],[6,28,54,80,106],[6,32,58,84,110],[6,30,58,86,114],[6,34,62,90,118],[6,26,50,74,98,122],[6,30,54,78,102,126],[6,26,52,78,104,130],[6,30,56,82,108,134],[6,34,60,86,112,138],[6,30,58,86,114,142],[6,34,62,90,118,146],[6,30,54,78,102,126,150],[6,24,50,76,102,128,154],[6,28,54,80,106,132,158],[6,32,58,84,110,136,162],[6,26,54,82,110,138,166],[6,30,58,86,114,142,170]],x=1335,d=7973,o=21522,s={},l=function(e){let t=0;for(;e!=0;)t+=1,e>>>=1;return t};return s.getBCHTypeInfo=function(e){let t=e<<10;for(;l(t)-l(x)>=0;)t^=x<<l(t)-l(x);return(e<<10|t)^o},s.getBCHTypeNumber=function(e){let t=e<<12;for(;l(t)-l(d)>=0;)t^=d<<l(t)-l(d);return e<<12|t},s.getPatternPosition=function(e){return w[e-1]},s.getMaskFunction=function(e){switch(e){case N.PATTERN000:return function(t,u){return(t+u)%2==0};case N.PATTERN001:return function(t,u){return t%2==0};case N.PATTERN010:return function(t,u){return u%3==0};case N.PATTERN011:return function(t,u){return(t+u)%3==0};case N.PATTERN100:return function(t,u){return(Math.floor(t/2)+Math.floor(u/3))%2==0};case N.PATTERN101:return function(t,u){return t*u%2+t*u%3==0};case N.PATTERN110:return function(t,u){return(t*u%2+t*u%3)%2==0};case N.PATTERN111:return function(t,u){return(t*u%3+(t+u)%2)%2==0};default:throw"bad maskPattern:"+e}},s.getErrorCorrectPolynomial=function(e){let t=K([1],0);for(let u=0;u<e;u+=1)t=t.multiply(K([1,H.gexp(u)],0));return t},s.getLengthInBits=function(e,t){if(1<=t&&t<10)switch(e){case k.MODE_NUMBER:return 10;case k.MODE_ALPHA_NUM:return 9;case k.MODE_8BIT_BYTE:return 8;case k.MODE_KANJI:return 8;default:throw"mode:"+e}else if(t<27)switch(e){case k.MODE_NUMBER:return 12;case k.MODE_ALPHA_NUM:return 11;case k.MODE_8BIT_BYTE:return 16;case k.MODE_KANJI:return 10;default:throw"mode:"+e}else if(t<41)switch(e){case k.MODE_NUMBER:return 14;case k.MODE_ALPHA_NUM:return 13;case k.MODE_8BIT_BYTE:return 16;case k.MODE_KANJI:return 12;default:throw"mode:"+e}else throw"type:"+t},s.getLostPoint=function(e){let t=e.getModuleCount(),u=0;for(let h=0;h<t;h+=1)for(let a=0;a<t;a+=1){let _=0,P=e.isDark(h,a);for(let D=-1;D<=1;D+=1)if(!(h+D<0||t<=h+D))for(let E=-1;E<=1;E+=1)a+E<0||t<=a+E||D==0&&E==0||P==e.isDark(h+D,a+E)&&(_+=1);_>5&&(u+=3+_-5)}for(let h=0;h<t-1;h+=1)for(let a=0;a<t-1;a+=1){let _=0;e.isDark(h,a)&&(_+=1),e.isDark(h+1,a)&&(_+=1),e.isDark(h,a+1)&&(_+=1),e.isDark(h+1,a+1)&&(_+=1),(_==0||_==4)&&(u+=3)}for(let h=0;h<t;h+=1)for(let a=0;a<t-6;a+=1)e.isDark(h,a)&&!e.isDark(h,a+1)&&e.isDark(h,a+2)&&e.isDark(h,a+3)&&e.isDark(h,a+4)&&!e.isDark(h,a+5)&&e.isDark(h,a+6)&&(u+=40);for(let h=0;h<t;h+=1)for(let a=0;a<t-6;a+=1)e.isDark(a,h)&&!e.isDark(a+1,h)&&e.isDark(a+2,h)&&e.isDark(a+3,h)&&e.isDark(a+4,h)&&!e.isDark(a+5,h)&&e.isDark(a+6,h)&&(u+=40);let p=0;for(let h=0;h<t;h+=1)for(let a=0;a<t;a+=1)e.isDark(a,h)&&(p+=1);let y=Math.abs(100*p/t/t-50)/5;return u+=y*10,u},s})(),H=(function(){let w=new Array(256),x=new Array(256);for(let o=0;o<8;o+=1)w[o]=1<<o;for(let o=8;o<256;o+=1)w[o]=w[o-4]^w[o-5]^w[o-6]^w[o-8];for(let o=0;o<255;o+=1)x[w[o]]=o;let d={};return d.glog=function(o){if(o<1)throw"glog("+o+")";return x[o]},d.gexp=function(o){for(;o<0;)o+=255;for(;o>=256;)o-=255;return w[o]},d})(),K=function(w,x){if(typeof w.length>"u")throw w.length+"/"+x;let d=(function(){let s=0;for(;s<w.length&&w[s]==0;)s+=1;let l=new Array(w.length-s+x);for(let e=0;e<w.length-s;e+=1)l[e]=w[e+s];return l})(),o={};return o.getAt=function(s){return d[s]},o.getLength=function(){return d.length},o.multiply=function(s){let l=new Array(o.getLength()+s.getLength()-1);for(let e=0;e<o.getLength();e+=1)for(let t=0;t<s.getLength();t+=1)l[e+t]^=H.gexp(H.glog(o.getAt(e))+H.glog(s.getAt(t)));return K(l,0)},o.mod=function(s){if(o.getLength()-s.getLength()<0)return o;let l=H.glog(o.getAt(0))-H.glog(s.getAt(0)),e=new Array(o.getLength());for(let t=0;t<o.getLength();t+=1)e[t]=o.getAt(t);for(let t=0;t<s.getLength();t+=1)e[t]^=H.gexp(H.glog(s.getAt(t))+l);return K(e,0).mod(s)},o},Y=(function(){let w=[[1,26,19],[1,26,16],[1,26,13],[1,26,9],[1,44,34],[1,44,28],[1,44,22],[1,44,16],[1,70,55],[1,70,44],[2,35,17],[2,35,13],[1,100,80],[2,50,32],[2,50,24],[4,25,9],[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12],[2,86,68],[4,43,27],[4,43,19],[4,43,15],[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14],[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15],[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13],[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16],[4,101,81],[1,80,50,4,81,51],[4,50,22,4,51,23],[3,36,12,8,37,13],[2,116,92,2,117,93],[6,58,36,2,59,37],[4,46,20,6,47,21],[7,42,14,4,43,15],[4,133,107],[8,59,37,1,60,38],[8,44,20,4,45,21],[12,33,11,4,34,12],[3,145,115,1,146,116],[4,64,40,5,65,41],[11,36,16,5,37,17],[11,36,12,5,37,13],[5,109,87,1,110,88],[5,65,41,5,66,42],[5,54,24,7,55,25],[11,36,12,7,37,13],[5,122,98,1,123,99],[7,73,45,3,74,46],[15,43,19,2,44,20],[3,45,15,13,46,16],[1,135,107,5,136,108],[10,74,46,1,75,47],[1,50,22,15,51,23],[2,42,14,17,43,15],[5,150,120,1,151,121],[9,69,43,4,70,44],[17,50,22,1,51,23],[2,42,14,19,43,15],[3,141,113,4,142,114],[3,70,44,11,71,45],[17,47,21,4,48,22],[9,39,13,16,40,14],[3,135,107,5,136,108],[3,67,41,13,68,42],[15,54,24,5,55,25],[15,43,15,10,44,16],[4,144,116,4,145,117],[17,68,42],[17,50,22,6,51,23],[19,46,16,6,47,17],[2,139,111,7,140,112],[17,74,46],[7,54,24,16,55,25],[34,37,13],[4,151,121,5,152,122],[4,75,47,14,76,48],[11,54,24,14,55,25],[16,45,15,14,46,16],[6,147,117,4,148,118],[6,73,45,14,74,46],[11,54,24,16,55,25],[30,46,16,2,47,17],[8,132,106,4,133,107],[8,75,47,13,76,48],[7,54,24,22,55,25],[22,45,15,13,46,16],[10,142,114,2,143,115],[19,74,46,4,75,47],[28,50,22,6,51,23],[33,46,16,4,47,17],[8,152,122,4,153,123],[22,73,45,3,74,46],[8,53,23,26,54,24],[12,45,15,28,46,16],[3,147,117,10,148,118],[3,73,45,23,74,46],[4,54,24,31,55,25],[11,45,15,31,46,16],[7,146,116,7,147,117],[21,73,45,7,74,46],[1,53,23,37,54,24],[19,45,15,26,46,16],[5,145,115,10,146,116],[19,75,47,10,76,48],[15,54,24,25,55,25],[23,45,15,25,46,16],[13,145,115,3,146,116],[2,74,46,29,75,47],[42,54,24,1,55,25],[23,45,15,28,46,16],[17,145,115],[10,74,46,23,75,47],[10,54,24,35,55,25],[19,45,15,35,46,16],[17,145,115,1,146,116],[14,74,46,21,75,47],[29,54,24,19,55,25],[11,45,15,46,46,16],[13,145,115,6,146,116],[14,74,46,23,75,47],[44,54,24,7,55,25],[59,46,16,1,47,17],[12,151,121,7,152,122],[12,75,47,26,76,48],[39,54,24,14,55,25],[22,45,15,41,46,16],[6,151,121,14,152,122],[6,75,47,34,76,48],[46,54,24,10,55,25],[2,45,15,64,46,16],[17,152,122,4,153,123],[29,74,46,14,75,47],[49,54,24,10,55,25],[24,45,15,46,46,16],[4,152,122,18,153,123],[13,74,46,32,75,47],[48,54,24,14,55,25],[42,45,15,32,46,16],[20,147,117,4,148,118],[40,75,47,7,76,48],[43,54,24,22,55,25],[10,45,15,67,46,16],[19,148,118,6,149,119],[18,75,47,31,76,48],[34,54,24,34,55,25],[20,45,15,61,46,16]],x=function(s,l){let e={};return e.totalCount=s,e.dataCount=l,e},d={},o=function(s,l){switch(l){case j.L:return w[(s-1)*4+0];case j.M:return w[(s-1)*4+1];case j.Q:return w[(s-1)*4+2];case j.H:return w[(s-1)*4+3];default:return}};return d.getRSBlocks=function(s,l){let e=o(s,l);if(typeof e>"u")throw"bad rs block @ typeNumber:"+s+"/errorCorrectionLevel:"+l;let t=e.length/3,u=[];for(let p=0;p<t;p+=1){let y=e[p*3+0],h=e[p*3+1],a=e[p*3+2];for(let _=0;_<y;_+=1)u.push(x(h,a))}return u},d})(),G=function(){let w=[],x=0,d={};return d.getBuffer=function(){return w},d.getAt=function(o){let s=Math.floor(o/8);return(w[s]>>>7-o%8&1)==1},d.put=function(o,s){for(let l=0;l<s;l+=1)d.putBit((o>>>s-l-1&1)==1)},d.getLengthInBits=function(){return x},d.putBit=function(o){let s=Math.floor(x/8);w.length<=s&&w.push(0),o&&(w[s]|=128>>>x%8),x+=1},d},V=function(w){let x=k.MODE_NUMBER,d=w,o={};o.getMode=function(){return x},o.getLength=function(e){return d.length},o.write=function(e){let t=d,u=0;for(;u+2<t.length;)e.put(s(t.substring(u,u+3)),10),u+=3;u<t.length&&(t.length-u==1?e.put(s(t.substring(u,u+1)),4):t.length-u==2&&e.put(s(t.substring(u,u+2)),7))};let s=function(e){let t=0;for(let u=0;u<e.length;u+=1)t=t*10+l(e.charAt(u));return t},l=function(e){if("0"<=e&&e<="9")return e.charCodeAt(0)-48;throw"illegal char :"+e};return o},q=function(w){let x=k.MODE_ALPHA_NUM,d=w,o={};o.getMode=function(){return x},o.getLength=function(l){return d.length},o.write=function(l){let e=d,t=0;for(;t+1<e.length;)l.put(s(e.charAt(t))*45+s(e.charAt(t+1)),11),t+=2;t<e.length&&l.put(s(e.charAt(t)),6)};let s=function(l){if("0"<=l&&l<="9")return l.charCodeAt(0)-48;if("A"<=l&&l<="Z")return l.charCodeAt(0)-65+10;switch(l){case" ":return 36;case"$":return 37;case"%":return 38;case"*":return 39;case"+":return 40;case"-":return 41;case".":return 42;case"/":return 43;case":":return 44;default:throw"illegal char :"+l}};return o},z=function(w){let x=k.MODE_8BIT_BYTE,d=w,o=v.stringToBytes(w),s={};return s.getMode=function(){return x},s.getLength=function(l){return o.length},s.write=function(l){for(let e=0;e<o.length;e+=1)l.put(o[e],8)},s},tt=function(w){let x=k.MODE_KANJI,d=w,o=v.stringToBytes;(function(e,t){let u=o(e);if(u.length!=2||(u[0]<<8|u[1])!=t)throw"sjis not supported."})("\u53CB",38726);let s=o(w),l={};return l.getMode=function(){return x},l.getLength=function(e){return~~(s.length/2)},l.write=function(e){let t=s,u=0;for(;u+1<t.length;){let p=(255&t[u])<<8|255&t[u+1];if(33088<=p&&p<=40956)p-=33088;else if(57408<=p&&p<=60351)p-=49472;else throw"illegal char at "+(u+1)+"/"+p;p=(p>>>8&255)*192+(p&255),e.put(p,13),u+=2}if(u<t.length)throw"illegal char at "+(u+1)},l},J=function(){let w=[],x={};return x.writeByte=function(d){w.push(d&255)},x.writeShort=function(d){x.writeByte(d),x.writeByte(d>>>8)},x.writeBytes=function(d,o,s){o=o||0,s=s||d.length;for(let l=0;l<s;l+=1)x.writeByte(d[l+o])},x.writeString=function(d){for(let o=0;o<d.length;o+=1)x.writeByte(d.charCodeAt(o))},x.toByteArray=function(){return w},x.toString=function(){let d="";d+="[";for(let o=0;o<w.length;o+=1)o>0&&(d+=","),d+=w[o];return d+="]",d},x},et=function(){let w=0,x=0,d=0,o="",s={},l=function(t){o+=String.fromCharCode(e(t&63))},e=function(t){if(t<0)throw"n:"+t;if(t<26)return 65+t;if(t<52)return 97+(t-26);if(t<62)return 48+(t-52);if(t==62)return 43;if(t==63)return 47;throw"n:"+t};return s.writeByte=function(t){for(w=w<<8|t&255,x+=8,d+=1;x>=6;)l(w>>>x-6),x-=6},s.flush=function(){if(x>0&&(l(w<<6-x),w=0,x=0),d%3!=0){let t=3-d%3;for(let u=0;u<t;u+=1)o+="="}},s.toString=function(){return o},s},nt=function(w){let x=w,d=0,o=0,s=0,l={};l.read=function(){for(;s<8;){if(d>=x.length){if(s==0)return-1;throw"unexpected end of file./"+s}let u=x.charAt(d);if(d+=1,u=="=")return s=0,-1;if(u.match(/^\s$/))continue;o=o<<6|e(u.charCodeAt(0)),s+=6}let t=o>>>s-8&255;return s-=8,t};let e=function(t){if(65<=t&&t<=90)return t-65;if(97<=t&&t<=122)return t-97+26;if(48<=t&&t<=57)return t-48+52;if(t==43)return 62;if(t==47)return 63;throw"c:"+t};return l},rt=function(w,x){let d=w,o=x,s=new Array(w*x),l={};l.setPixel=function(p,y,h){s[y*d+p]=h},l.write=function(p){p.writeString("GIF87a"),p.writeShort(d),p.writeShort(o),p.writeByte(128),p.writeByte(0),p.writeByte(0),p.writeByte(0),p.writeByte(0),p.writeByte(0),p.writeByte(255),p.writeByte(255),p.writeByte(255),p.writeString(","),p.writeShort(0),p.writeShort(0),p.writeShort(d),p.writeShort(o),p.writeByte(0);let y=2,h=t(y);p.writeByte(y);let a=0;for(;h.length-a>255;)p.writeByte(255),p.writeBytes(h,a,255),a+=255;p.writeByte(h.length-a),p.writeBytes(h,a,h.length-a),p.writeByte(0),p.writeString(";")};let e=function(p){let y=p,h=0,a=0,_={};return _.write=function(P,D){if(P>>>D)throw"length over";for(;h+D>=8;)y.writeByte(255&(P<<h|a)),D-=8-h,P>>>=8-h,a=0,h=0;a=P<<h|a,h=h+D},_.flush=function(){h>0&&y.writeByte(a)},_},t=function(p){let y=1<<p,h=(1<<p)+1,a=p+1,_=u();for(let m=0;m<y;m+=1)_.add(String.fromCharCode(m));_.add(String.fromCharCode(y)),_.add(String.fromCharCode(h));let P=J(),D=e(P);D.write(y,a);let E=0,I=String.fromCharCode(s[E]);for(E+=1;E<s.length;){let m=String.fromCharCode(s[E]);E+=1,_.contains(I+m)?I=I+m:(D.write(_.indexOf(I),a),_.size()<4095&&(_.size()==1<<a&&(a+=1),_.add(I+m)),I=m)}return D.write(_.indexOf(I),a),D.write(h,a),D.flush(),P.toByteArray()},u=function(){let p={},y=0,h={};return h.add=function(a){if(h.contains(a))throw"dup key:"+a;p[a]=y,y+=1},h.size=function(){return y},h.indexOf=function(a){return p[a]},h.contains=function(a){return typeof p[a]<"u"},h};return l},ot=function(w,x,d){let o=rt(w,x);for(let t=0;t<x;t+=1)for(let u=0;u<w;u+=1)o.setPixel(u,t,d(u,t));let s=J();o.write(s);let l=et(),e=s.toByteArray();for(let t=0;t<e.length;t+=1)l.writeByte(e[t]);return l.flush(),"data:image/gif;base64,"+l},X=v,st=v.stringToBytes;window.qrcode=X;})();
+
+// ---------- low-poly look: layered faceted landscapes (dusk palette), backgrounds, avatars, gem badges ----------
+const LP = {
+  sky:   ['#a99bd6','#c9a8d8','#f0b6c6','#f9cdb0','#fde3c4'],     // lilac → pink → peach (calm pastel dusk)
+  hills: ['#fbe1d3','#f2c4c8','#d9b0d2','#ab9acb','#7f7ab3','#55558f'], // far → near
+  water: ['#8fd3c7','#7ac6bc','#66b6b0','#529fa0'],
+  cream: '#fff8ef', ink: '#3b3560', sun:'#fff1d6', gold:'#f7b267', teal:'#4fa3a5', rose:'#ee8a7a', plum:'#55558f',
+};
+const hexRgb = h => [1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const mixC = (a,b,t) => { const A=hexRgb(a), B=hexRgb(b); return `rgb(${A.map((v,i)=>Math.round(v+(B[i]-v)*t)).join(',')})`; };
+const shadeC = (c,k) => { const A = c.startsWith('#') ? hexRgb(c) : c.match(/\d+/g).map(Number); return `rgb(${A.map(v=>Math.round(clamp(v*(1+k),0,255))).join(',')})`; };
+const ramp = (stops, t) => { t = clamp(t,0,1)*(stops.length-1); const i = Math.min(stops.length-2, Math.floor(t)); return mixC(stops[i], stops[i+1], t-i); };
+function rng(seed){ let s = seed>>>0 || 1; return ()=>((s = (s*1664525 + 1013904223)>>>0) / 4294967296); }
+// a triangulated gradient as SVG (used for page and card backgrounds)
+function lpSVG(w, h, stops, seed=7, cols=14, rows=9, jit=0.42, var_=0.05){
+  const r = rng(seed), pts = [];
+  for (let y=0;y<=rows;y++){ const row=[]; for (let x=0;x<=cols;x++){ const ex = x===0||x===cols, ey = y===0||y===rows; row.push([ (x+(ex?0:(r()-0.5)*jit*2))*w/cols, (y+(ey?0:(r()-0.5)*jit*2))*h/rows ]); } pts.push(row); }
+  let out = '';
+  for (let y=0;y<rows;y++) for (let x=0;x<cols;x++){ const a=pts[y][x], b=pts[y][x+1], c=pts[y+1][x], d=pts[y+1][x+1], flip = r()<0.5;
+    for (const tri of flip ? [[a,b,d],[a,d,c]] : [[a,b,c],[b,d,c]]){ const cy = (tri[0][1]+tri[1][1]+tri[2][1])/3; out += `<polygon points="${tri.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="${shadeC(ramp(stops, cy/h), (r()-0.5)*var_*2)}"/>`; } }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" shape-rendering="crispEdges">${out}</svg>`;
+}
+const lpURL = (...a) => `url("data:image/svg+xml,${encodeURIComponent(lpSVG(...a))}")`;
+// a faceted mountain ridge with a lit and a shaded side per peak (Firewatch-style layer)
+function lpRidge(seed, n, w, amp){ const r = rng(seed), pts = []; for (let i=0;i<=n;i++) pts.push([i/n*w, (i%2 ? -amp*(0.55+r()*0.45) : -amp*(0.05+r()*0.3))]); return pts; }
+function lpMountains(g, W, baseY, amp, col, seed, off, n=8, light=0.07){
+  const w = W*1.6, ridge = lpRidge(seed, n*2, w, amp), o = ((off % w) + w) % w;
+  for (const dx of [-o, w-o]){
+    g.beginPath(); g.moveTo(dx, baseY+2); for (const p of ridge) g.lineTo(dx+p[0], baseY+p[1]); g.lineTo(dx+w, baseY+2); g.closePath(); g.fillStyle = col; g.fill();
+    for (let i=1;i<ridge.length-1;i+=2){ const a = ridge[i-1], p = ridge[i], b = ridge[i+1];
+      g.beginPath(); g.moveTo(dx+p[0], baseY+p[1]); g.lineTo(dx+a[0], baseY+a[1]); g.lineTo(dx+(a[0]+p[0])/2, baseY+2); g.closePath(); g.fillStyle = shadeC(col, light); g.fill();
+      g.beginPath(); g.moveTo(dx+p[0], baseY+p[1]); g.lineTo(dx+b[0], baseY+b[1]); g.lineTo(dx+(p[0]+b[0])/2+8, baseY+2); g.closePath(); g.fillStyle = shadeC(col, -light); g.fill(); }
+  }
+}
+function lpPine(g, x, y, h, col){ const w = h*0.42; for (let k=0;k<3;k++){ const yy = y - k*h*0.28, ww = w*(1-k*0.25); g.beginPath(); g.moveTo(x, yy-h*0.45); g.lineTo(x-ww/2, yy); g.lineTo(x, yy-h*0.08); g.closePath(); g.fillStyle = shadeC(col,0.08); g.fill(); g.beginPath(); g.moveTo(x, yy-h*0.45); g.lineTo(x+ww/2, yy); g.lineTo(x, yy-h*0.08); g.closePath(); g.fillStyle = shadeC(col,-0.08); g.fill(); } }
+function lpSky(g, W, H){ const gr = g.createLinearGradient(0,0,0,H); LP.sky.forEach((c,i)=>gr.addColorStop(i/(LP.sky.length-1), c)); g.fillStyle = gr; g.fillRect(0,0,W,H); }
+function lpSun(g, x, y, r){ const gl = g.createRadialGradient(x,y,r*0.6,x,y,r*3); gl.addColorStop(0,'rgba(255,226,176,.55)'); gl.addColorStop(1,'rgba(255,226,176,0)'); g.fillStyle = gl; g.fillRect(x-r*3,y-r*3,r*6,r*6);
+  g.beginPath(); for (let i=0;i<10;i++){ const a = i/10*Math.PI*2; g.lineTo(x+Math.cos(a)*r, y+Math.sin(a)*r); } g.closePath(); g.fillStyle = LP.sun; g.fill(); }
+
+// ---- low-poly avatars (faceted head, cap and simple geometric face) ----
+const AV_CAPS2 = ['#e07a55','#2f8a8c','#ffb547','#7aa36b','#8b6bb0','#d9603b','#3f5f9e','#b3527a','#26294a','#efe6d8'];
+const AV_SKIN2 = ['#f6d7bd','#e8b993','#c98e66','#8f5c3e','#5c3a28'];
+function avatarSVG(av, size=72){
+  av = av || {}; const cap = AV_CAPS2[av.c||0], skin = AV_SKIN2[av.s||0], I = LP.ink, L = c=>shadeC(c,0.12), D = c=>shadeC(c,-0.14);
+  // octagon head split into 8 facets, lit from the upper left
+  const cx=50, cy=54, R=34, pts = Array.from({length:8},(_,i)=>{ const a = -Math.PI/2 + (i+0.5)/8*Math.PI*2; return [cx+Math.cos(a)*R, cy+Math.sin(a)*R*1.05]; });
+  const shades = [0.10,0.02,-0.08,-0.16,-0.12,-0.02,0.08,0.14];
+  let head = pts.map((p,i)=>{ const q = pts[(i+1)%8]; return `<polygon points="${cx},${cy} ${p[0].toFixed(1)},${p[1].toFixed(1)} ${q[0].toFixed(1)},${q[1].toFixed(1)}" fill="${shadeC(skin, shades[i])}"/>`; }).join('');
+  const capP = `<polygon points="16,46 22,26 38,15 62,15 78,26 84,46" fill="${cap}"/><polygon points="16,46 22,26 38,15 50,46" fill="${L(cap)}"/><polygon points="62,15 78,26 84,46 50,46" fill="${D(cap)}"/><polygon points="78,40 98,44 84,50" fill="${D(cap)}"/>`;
+  const eyes = av.f===3 ? `<polygon points="28,52 72,52 68,62 54,62 50,57 46,62 32,62" fill="${I}"/>`
+    : av.f===4 ? `<polygon points="36,56 42,52 44,60" fill="${I}"/><polygon points="56,57 66,55 66,58 56,60" fill="${I}"/>`
+    : av.f===1 ? `<polygon points="35,58 45,55 45,60 35,61" fill="${I}"/><polygon points="55,55 65,58 65,61 55,60" fill="${I}"/>`
+    : `<polygon points="40,52 45,57 40,62 35,57" fill="${I}"/><polygon points="60,52 65,57 60,62 55,57" fill="${I}"/>`;
+  const mouth = av.f===2 ? `<polygon points="48,70 54,70 51,75" fill="${I}"/>` : av.f===1 ? `<polygon points="40,72 60,72 58,75 42,75" fill="${I}"/>` : `<polygon points="38,68 62,68 56,76 44,76" fill="${I}"/>`;
+  const acc = [ '',
+    `<polygon points="14,44 86,44 86,50 14,50" fill="#fff6ec"/><polygon points="14,44 6,40 8,52 14,50" fill="#efe6d8"/>`,
+    `<polygon points="36,67 50,63 64,67 58,70 50,67 42,70" fill="${I}"/>`,
+    `<polygon points="30,52 46,52 46,62 30,62" fill="none" stroke="${I}" stroke-width="3"/><polygon points="54,52 70,52 70,62 54,62" fill="none" stroke="${I}" stroke-width="3"/><line x1="46" y1="56" x2="54" y2="56" stroke="${I}" stroke-width="3"/>`,
+    `<polygon points="50,88 38,82 38,94" fill="${cap}"/><polygon points="50,88 62,82 62,94" fill="${D(cap)}"/>`,
+    `<polygon points="80,52 84,60 80,64 76,60" fill="#bfe3ef"/>` ][av.a||0];
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="av"><polygon points="20,96 80,96 50,88" fill="rgba(38,41,74,.18)"/>${head}${capP}${eyes}${mouth}${acc}</svg>`;
+}
+// ---- gem badges: a faceted hexagonal crystal with a line icon ----
+function badgeSVG(key, on=true, size=64){
+  const [ic, col] = BADGE_ART[key] || ['star','#ffb547'], c = on ? col : '#d8d2c8';
+  const P = Array.from({length:6},(_,i)=>{ const a = -Math.PI/2 + i/6*Math.PI*2; return [50+Math.cos(a)*42, 50+Math.sin(a)*42]; });
+  const inner = Array.from({length:6},(_,i)=>{ const a = -Math.PI/2 + i/6*Math.PI*2; return [50+Math.cos(a)*26, 50+Math.sin(a)*26]; });
+  const sh = [0.22,0.08,-0.12,-0.22,-0.06,0.14];
+  let facets = P.map((p,i)=>{ const q = P[(i+1)%6], a = inner[i], b = inner[(i+1)%6]; return `<polygon points="${[p,q,b,a].map(v=>v.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="${shadeC(c, sh[i])}"/>`; }).join('');
+  facets += `<polygon points="${inner.map(v=>v.map(n=>n.toFixed(1)).join(',')).join(' ')}" fill="${shadeC(c,0.04)}"/>`;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="bdg${on?'':' off'}">${facets}
+    <g stroke="${on?'#fff6ec':'#f3efe8'}" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" transform="translate(50 50) scale(.62) translate(-50 -48)">${ICONS[ic].replace(/fill="#f8eed5"/g,'fill="none"').replace(/fill="#1b130d"/g,'fill="#fff6ec"')}</g></svg>`;
+}
+
+// paint the faceted dusk backdrop behind the game screens
+function applyLp(ids){ const stops = ['#8f84c8','#b9a2d6','#e8b0c6','#f6c6b1','#fcdcc0'];
+  ids.forEach((id,i)=>{ const el = document.getElementById(id); if (!el) return; el.classList.add('lpbg'); el.style.backgroundImage = lpURL(1600, 1000, stops, 3+i*11, 18, 11); }); }
+
+// QR code as an SVG (vector, sharp at any size on a TV); generator bundled in qrlib.js
+function qrSVG(text, dark='#3b3560', light='#fff8ef'){ const q = qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(), m = 2; let d = '';
+  for (let r=0;r<n;r++) for (let c=0;c<n;c++) if (q.isDark(r,c)) d += `M${c+m} ${r+m}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n+2*m} ${n+2*m}" shape-rendering="crispEdges" class="qr" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="${light}"/><path d="${d}" fill="${dark}"/></svg>`; }
+
+// ---------- athlete: team login, live to the coach, diary, heart-rate zones ----------
+const TEAM = (()=>{ try{ return JSON.parse(localStorage.getItem('ergcoach.team')||'null'); }catch(e){ return null; } })() || {};
+const saveTeam = ()=>localStorage.setItem('ergcoach.team', JSON.stringify({code:TEAM.code, token:TEAM.token, athlete:TEAM.athlete, team:TEAM.team}));
+const URLTEAM = new URLSearchParams(location.search).get('team') || TEAM_CODE;
+let RT = null, rtCode = null, joinState = { step:'code', roster:null, pick:null, pin:'' };
+function profileHR(){ return { max_hr:S.profile.max_hr, rest_hr:S.profile.rest_hr, birth_year:S.profile.birth_year }; }
+
+// --- team panel ---
+function renderTeam(){
+  const p = $('teamPane');
+  if (TEAM.token){
+    p.innerHTML = `<h2>Team</h2><div class="field"><div class="fl"><b style="font-size:16px">${esc(TEAM.athlete.name)}</b><small>${esc(TEAM.team||TEAM.code)} · ${API.kind==='local'?'local demo server':'live to the coach'}</small></div><span class="dot ${RT?'on':''}"></span></div><div class="btnRow"><button id="tOut">Log out</button></div>`;
+    $('tOut').onclick = ()=>{ if (RT) RT.close(); RT=null; Object.assign(TEAM,{token:null,athlete:null}); saveTeam(); joinState={step:'roster',roster:joinState.roster,pick:null,pin:''}; renderTeam(); renderDiaryIfOpen(); };
+    return;
+  }
+  if (joinState.step==='code'){
+    p.innerHTML = `<h2>Join your team</h2><div class="field"><div class="fl">Team code<small>from your coach or the QR code</small></div><input type="text" id="tCode" style="width:130px;text-transform:uppercase" value="${esc(TEAM.code||URLTEAM||'')}" autocapitalize="characters"></div><div class="btnRow"><button class="solid" id="tFind">Find team</button></div><p class="status" id="tMsg"></p>`;
+    $('tFind').onclick = async ()=>{ const code=$('tCode').value.trim().toUpperCase(); if (!code) return; try{ const r = await API.roster(code); if (!r || !r.team){ $('tMsg').textContent='No team with that code.'; return; } TEAM.code=code; TEAM.team=r.team.name; saveTeam(); joinState={step:'roster',roster:r,pick:null,pin:''}; renderTeam(); }catch(e){ $('tMsg').textContent=e.message; } };
+    return;
+  }
+  if (joinState.step==='roster'){
+    const r = joinState.roster;
+    if (!r){ joinState.step='code'; return renderTeam(); }
+    p.innerHTML = `<h2>${esc(r.team.name)} · tap your name</h2>${r.athletes.length ? `<div class="names">${r.athletes.map(a=>`<button data-a="${a.id}">${esc(a.name)}</button>`).join('')}</div>` : '<p class="hint">The coach has not added anyone yet.</p>'}<div class="btnRow"><button id="tBack">Other team</button></div>`;
+    p.querySelectorAll('[data-a]').forEach(b=>b.onclick=async ()=>{ joinState.pick=r.athletes.find(a=>a.id===b.dataset.a);
+      // no PIN set for this rower: scanning the QR and tapping your name is enough
+      if (!joinState.pick.has_pin){ try{ const res = await API.athleteLogin(TEAM.code, joinState.pick.id, ''); TEAM.token=res.token; TEAM.athlete=res.athlete; saveTeam(); await afterLogin(); toast('Hi '+res.athlete.name); }catch(e){ toast(e.message); } return; }
+      joinState.step='pin'; joinState.pin=''; renderTeam(); });
+    $('tBack').onclick = ()=>{ joinState.step='code'; renderTeam(); };
+    return;
+  }
+  // PIN pad
+  p.innerHTML = `<h2>${esc(joinState.pick.name)} · your 4-digit code</h2><div class="pinDots">${[0,1,2,3].map(i=>`<i class="${i<joinState.pin.length?'on':''}"></i>`).join('')}</div><p class="status" id="tMsg" style="text-align:center"></p>
+    <div class="pad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-n="${n}">${n}</button>`).join('')}<button data-n="back">⌫</button><button data-n="0">0</button><button data-n="x" style="font-size:12px">Back</button></div>`;
+  p.querySelectorAll('[data-n]').forEach(b=>b.onclick=async ()=>{
+    const n=b.dataset.n;
+    if (n==='x'){ joinState.step='roster'; return renderTeam(); }
+    if (n==='back') joinState.pin = joinState.pin.slice(0,-1); else if (joinState.pin.length<4) joinState.pin += n;
+    p.querySelectorAll('.pinDots i').forEach((d,i)=>d.classList.toggle('on', i<joinState.pin.length));
+    if (joinState.pin.length===4){
+      try{ const r = await API.athleteLogin(TEAM.code, joinState.pick.id, joinState.pin); TEAM.token=r.token; TEAM.athlete=r.athlete; saveTeam(); await afterLogin(); toast('Hi '+r.athlete.name); }
+      catch(e){ joinState.pin=''; renderTeam(); $('tMsg').textContent = e.message; }
+    }
+  });
+}
+async function afterLogin(){
+  try{ const pr = await API.myProfile(TEAM.token); if (pr){ const m={height:'hgt',weight:'wgt',sex:'sex',birth_year:'birth_year',max_hr:'max_hr',rest_hr:'rest_hr'}; for (const k in m) if (pr[k]!=null) S.profile[m[k]]=pr[k]; save(); fillProfile(); if (pr.team) TEAM.team=pr.team; } }
+  catch(e){ if (/Not logged in/i.test(e.message)){ TEAM.token=null; saveTeam(); } }
+  await connectRt(); renderTeam(); renderDiaryIfOpen(); refreshProg();
+}
+
+// --- live to the coach ---
+async function connectRt(){
+  if (!TEAM.token || !TEAM.code) return;
+  if (RT && rtCode===TEAM.code) return;
+  try{ RT = await API.rt(TEAM.code, onCoachMsg); rtCode = TEAM.code; hello(); }catch(e){ console.warn('realtime', e); RT=null; }
+  renderTeam();
+}
+const me = ()=>({ id:TEAM.athlete.id, name:TEAM.athlete.name });
+function hello(){ if (RT && TEAM.athlete) RT.send({ type:'hi', ...me(), rowing: PM.connected||DEMO.on, demo:DEMO.on }); }
+let lastSt = 0;
+HOOKS.status.push(()=>{
+  if (!RT || !TEAM.athlete) return; const now = Date.now(); if (now-lastSt < 900) return; lastSt = now;
+  const last = LIVE.strokes[LIVE.strokes.length-1];
+  RT.send({ type:'st', ...me(), t:now, pace:LIVE.pace || (last && paceFromWatts(last.power)) || null, rate:LIVE.rate||null, watt:LIVE.watt || (last&&last.power) || null, dist:Math.round(LIVE.dist||0), el:LIVE.elapsed||((now-(LIVE.start||now))/1000), hr:LIVE.hr||null, max_hr:maxHrOf(profileHR()), rest_hr:S.profile.rest_hr||null, n:LIVE.strokes.length, demo:DEMO.on });
+});
+HOOKS.stroke.push(s=>{
+  if (!RT || !TEAM.athlete) return;
+  const m = s.curve ? curveMetrics(s.curve) : null;
+  RT.send({ type:'k', ...me(), t:s.t, c:s.curve ? resample(s.curve,30).map(v=>Math.round(v)) : null, dl:s.driveLen, dt:s.driveTime, rt:s.recTime, pk:s.peak?Math.round(s.peak):null, p:s.power, r:s.rate, hr:s.hr, pp:m&&+m.peakPos.toFixed(2), pu:m&&+m.pickup.toFixed(2), hu:m&&m.humps, dist:Math.round(LIVE.dist||0) });
+});
+setInterval(()=>{ if (RT && !(PM.connected||DEMO.on)) hello(); }, 5000);
+function onCoachMsg(m){
+  if (!m || !TEAM.athlete) return;
+  if (m.type==='ping') return hello();
+  if (m.type==='wk') return athWk(m);
+  if (m.type!=='cmd') return;
+  if (m.to && m.to!=='all' && !m.to.includes(TEAM.athlete.id)) return;
+  if (m.count){ let n = m.count; const tick=()=>{ showBanner(n>0 ? String(n) : 'GO!', m.sub||''); if (n-- > 0) setTimeout(tick, 1000); else setTimeout(hideBanner, 1500); }; tick(); return; }
+  showBanner(m.title||'', m.sub||''); if (m.ttl) setTimeout(hideBanner, m.ttl*1000);
+}
+function showBanner(t, sub){ $('bannerTxt').innerHTML = esc(t)+(sub?`<small>${esc(sub)}</small>`:''); $('banner').classList.remove('hidden'); }
+function hideBanner(){ $('banner').classList.add('hidden'); }
+$('bannerX').onclick = hideBanner;
+
+// --- heart rate strap (any standard Bluetooth chest belt) ---
+$('btnHr').onclick = async ()=>{
+  const bt = navigator.bluetooth || navigator.webble; if (!bt){ btCheck(); return; }
+  try{
+    const d = await bt.requestDevice({ filters:[{ services:['heart_rate'] }] });
+    const c = await (await (await d.gatt.connect()).getPrimaryService('heart_rate')).getCharacteristic('heart_rate_measurement');
+    c.addEventListener('characteristicvaluechanged', e=>{ const v=e.target.value, f=v.getUint8(0); LIVE.hr = f&1 ? v.getUint16(1,true) : v.getUint8(1); LIVE.hrSrc='strap'; liveUi(); });
+    await c.startNotifications(); LIVE.hrSrc='strap'; $('btnHr').textContent = 'HR: '+(d.name||'connected'); toast('Heart rate connected');
+    d.addEventListener('gattserverdisconnected', ()=>{ LIVE.hrSrc=null; $('btnHr').textContent='Heart rate strap'; });
+  }catch(e){ if (e.name!=='NotFoundError') toast('Heart rate: '+e.message); }
+};
+
+// --- profile & zones ---
+function fillProfile(){
+  $('pHgt').value = S.profile.hgt||''; $('pWgt').value = S.profile.wgt||''; $('pSex').value = S.profile.sex||'';
+  $('pBy').value = S.profile.birth_year||''; $('pMax').value = S.profile.max_hr||''; $('pRest').value = S.profile.rest_hr||'';
+  renderZones();
+}
+function renderZones(){
+  const p = profileHR(), zt = zoneTable(p), mx = maxHrOf(p);
+  $('zoneBox').innerHTML = zt ? `<table class="zt"><tr><th>Zone</th><th>bpm</th><th>% HRR</th></tr>${zt.map(z=>`<tr><td><span class="sw" style="background:${z.col}"></span>${z.k}</td><td>${z.from}–${z.to}</td><td>${Math.round(z.lo*100)}–${Math.round(Math.min(1,z.hi)*100)}</td></tr>`).join('')}</table><p class="hint">Karvonen: zone bpm = resting + (max − resting) × %. It uses <b>your</b> resting pulse, so it is fairer than a plain % of max. ${S.profile.max_hr?'':`Max HR estimated at ${mx} from your age — a tested max is better.`}</p>`
+    : `<p class="hint">Enter max (or year of birth) and resting heart rate to get your personal training zones.</p>`;
+}
+const profMap = { pHgt:'hgt', pWgt:'wgt', pSex:'sex', pBy:'birth_year', pMax:'max_hr', pRest:'rest_hr' };
+for (const id in profMap) $(id).oninput = $(id).onchange = ()=>{
+  const v = $(id).value; S.profile[profMap[id]] = id==='pSex' ? v : (+v||null); save(); renderZones();
+  clearTimeout(fillProfile.h); fillProfile.h = setTimeout(()=>{ if (TEAM.token) API.updateProfile(TEAM.token, { height:S.profile.hgt, weight:S.profile.wgt, sex:S.profile.sex, birth_year:S.profile.birth_year, max_hr:S.profile.max_hr, rest_hr:S.profile.rest_hr }).catch(()=>{}); }, 800);
+};
+
+// --- save to the cloud diary ---
+function zoneSecs(strokes){
+  const o = {}; for (const s of strokes){ const z = zoneOf(profileHR(), s.hr); if (!z) continue; const d = (s.driveTime||0)+(s.recTime||0) || 60/(s.rate||20); o[z.k] = (o[z.k]||0)+d; }
+  for (const k in o) o[k] = Math.round(o[k]); return o;
+}
+function cloudSession(L){
+  const st = L.strokes, su = summarize(st), hrs = st.map(s=>s.hr).filter(Boolean), zs = zoneSecs(st);
+  const dom = Object.entries(zs).sort((a,b)=>b[1]-a[1])[0];
+  const dur = L.elapsed ? Math.round(L.elapsed) : Math.round((st[st.length-1].t - L.start)/1000 + (st[0].driveTime||0) + (st[0].recTime||0));
+  return { started_at:new Date(L.start).toISOString(), kind:'erg', distance:Math.round(L.dist||0), duration:dur,
+    avg_power:Math.round(su.power||0), avg_rate:+(su.rate||0).toFixed(1), avg_hr:hrs.length?Math.round(mean(hrs)):null, score:su.nC>=3?scoreOf(su):null, zone:dom?dom[0]:null,
+    summary:{ game:L.game||undefined, peakPos:+su.peakPos.toFixed(3), pickup:+su.pickup.toFixed(3), ratio:+su.ratio.toFixed(2), cv:+su.cv.toFixed(3), humpShare:+su.humpShare.toFixed(2), dl:+(su.dl||0).toFixed(2), dt:+(su.dt||0).toFixed(2), rt:+(su.rt||0).toFixed(2), pk:Math.round(su.pk||0), curve:resample(su.avgCurve,25).map(v=>Math.round(v)), zoneSec:zs, demo:L.src==='demo' },
+    strokes: packSession(L).strokes };
+}
+async function saveCloud(L){
+  if (!TEAM.token) return false;
+  try{ const id = await API.saveSession(TEAM.token, cloudSession(L)); DIARY.cache=null; await afterSave(id); return true; }catch(e){ console.warn(e); return false; }
+}
+// ---- competing against yourself ----
+const MY = { P:null };
+async function refreshProg(){ try{ MY.P = progress(await diarySessions()); }catch(e){} return MY.P; }
+async function afterSave(id){
+  const P = await refreshProg(); if (!P) return;
+  const evs = P.events.filter(e=>e.sid===id);
+  if (RT && TEAM.athlete){ RT.send({ type:'saved', ...me() }); if (evs.length) RT.send({ type:'ev', ...me(), events:evs }); }
+  celebrate(evs);
+}
+function celebrate(evs){
+  const q = [...evs].sort((a,b)=>(EV_W[b.k]||0)-(EV_W[a.k]||0)).slice(0,4); let i = 0;
+  const next = ()=>{ if (i>=q.length) return hideBanner(); const t = evText(q[i++]); showBanner(t.big, [t.line,t.sub].filter(Boolean).join(' · ')); setTimeout(next, 3500); };
+  if (q.length) setTimeout(next, 400);
+}
+HOOKS.status.push(()=>{
+  let el = $('lSelf'); if (!el){ el = document.createElement('div'); el.id='lSelf'; el.className='selfRow'; $('lHrRow').after(el); }
+  const n = MY.P && MY.P.normal, ks = LIVE.strokes.filter(k=>k.power && Date.now()-k.t < 30000);
+  if (!n){ el.innerHTML = `<div class="hint">Save a few sessions and you get your own normal to beat.</div>`; return; }
+  if (ks.length < 4){ el.innerHTML = `<div class="sv">–</div><div class="sl">vs your normal ${Math.round(n)} W<br><small>last 30 s</small></div>`; return; }
+  const d = (mean(ks.map(k=>k.power))/n - 1)*100;
+  el.innerHTML = `<div class="sv" style="color:${d>=0?'#16a34a':'#757575'}">${d>=0?'+':''}${Math.round(d)}%</div><div class="sl">vs your normal ${Math.round(n)} W<br><small>${d>=3?'You are on the big screen':'last 30 s'}</small></div>`;
+});
+function progressCard(P){
+  const pbs = PB_DISTS.filter(d=>P.pbs[d]);
+  return `<div class="xpc"><div class="pTop"><div><div class="pLv">Level ${P.level}</div><div class="pRank">${esc(rankOf(P.level))}</div></div><div style="text-align:right"><div class="pLv">${P.streak||0}</div><div class="pRank">week streak</div></div></div>
+    <div class="pBar"><i style="width:${Math.round(P.lvFrac*100)}%"></i></div><div class="hint">${P.xp} XP · ${P.toNext} to level ${P.level+1}${P.normal?` · your normal ${Math.round(P.normal)} W`:''}</div>
+    <div class="smallLbl" style="margin-top:14px">Personal bests</div>${pbs.length?`<div class="pbs">${pbs.map(d=>`<div><b>${fmtTime(P.pbs[d].time)}</b><small>${d} m · ${new Date(P.pbs[d].at).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</small></div>`).join('')}</div>`:'<p class="hint">Row 500, 1000, 2000, 5000, 6000 or 10 000 m and your best time lands here.</p>'}
+    <div class="smallLbl" style="margin-top:14px">Badges · ${Object.keys(P.badges).length} of ${Object.keys(BADGES).length}</div><div class="badges">${Object.entries(BADGES).map(([k,b])=>`<div class="bdgw" title="${esc(b.d)}">${badgeSVG(k,!!P.badges[k],46)}${esc(b.t)}</div>`).join('')}</div></div>`;
+}
+
+// --- diary ---
+const DIARY = { cache:null, full:{}, edit:null, adding:false };
+const KINDS = { erg:'Erg', water:'On the water', run:'Run', bike:'Bike', strength:'Strength', other:'Other' };
+async function diarySessions(){
+  if (!TEAM.token) return S.sessions.map(s=>{ const st=unpack(s), su=summarize(st), last=st[st.length-1]; return { id:s.id, local:true, started_at:new Date(s.start).toISOString(), kind:'erg', distance:s.dist, duration:last?Math.round((last.t-s.start)/1000):null, avg_power:Math.round(su.power||0), avg_rate:su.rate, avg_hr:null, score:su.nC>=3?scoreOf(su):null, summary:{}, _local:s }; });
+  if (!DIARY.cache) DIARY.cache = await API.mySessions(TEAM.token, false);
+  return DIARY.cache;
+}
+function renderDiaryIfOpen(){ if (VIEW==='log') renderLog(); }
+async function renderLog(){
+  const lp = $('logPane');
+  lp.innerHTML = '<h2>Training diary</h2><p class="hint">Loading…</p>';
+  let ss; try{ ss = await diarySessions(); }catch(e){ lp.innerHTML = `<h2>Training diary</h2><p class="hint">Could not reach the server: ${esc(e.message)}</p>`; return; }
+  const erg = ss.filter(s=>(s.kind||'erg')==='erg' && !(s.summary&&s.summary.demo));
+  const p2 = pred2k(erg), lvl = levelOf(p2 && p2.time, S.profile.sex), wkg = p2 && S.profile.wgt ? p2.watts/S.profile.wgt : null;
+  const since = Date.now() - 28*864e5, recent = ss.filter(s=>new Date(s.started_at).getTime()>=since);
+  const zsec = {}; for (const s of recent){ const zs = s.summary && s.summary.zoneSec; if (zs && Object.keys(zs).length) for (const k in zs) zsec[k]=(zsec[k]||0)+zs[k]; else if (s.zone && s.duration) zsec[s.zone]=(zsec[s.zone]||0)+s.duration; }
+  const zmax = Math.max(1, ...Object.values(zsec));
+  const trend = erg.slice(0,20).reverse();
+  MY.P = progress(ss);
+  let h = `<h2>Training diary${TEAM.athlete?' · '+esc(TEAM.athlete.name):''}</h2>` + progressCard(MY.P);
+  if (!TEAM.token) h += `<div class="note">Not logged in to a team: sessions are only stored on this phone. Join your team under <b>PM5</b> to keep them in your diary and share them with the coach.</div>`;
+  h += `<div class="chips">
+    <div class="chip"><div class="cv">${p2?fmtTime(p2.time):'–'}</div><div class="cl">predicted 2 km${p2?` · from ${p2.from.distance} m`:''}</div></div>
+    <div class="chip"><div class="cv">${lvl||'–'}</div><div class="cl">level${wkg?` · ${fmt(wkg,2)} W/kg`:''}</div></div>
+    <div class="chip"><div class="cv">${recent.length}</div><div class="cl">sessions, last 4 weeks</div></div>
+    <div class="chip"><div class="cv">${Math.round(recent.reduce((a,s)=>a+(s.distance||0),0)/1000)} km</div><div class="cl">${Math.round(recent.reduce((a,s)=>a+(s.duration||0),0)/60)} min, last 4 weeks</div></div></div>`;
+  h += `<div class="smallLbl" style="margin-top:16px">Minutes per zone · last 4 weeks</div><div class="bars">${[{k:'Rec',col:'#d6d6d6'},...ZONES].map(z=>`<div><span style="height:${(zsec[z.k]||0)/zmax*110}px;background:${z.col}"></span></div>`).join('')}</div><div class="barsL">${[{k:'Rec'},...ZONES].map(z=>`<div>${z.k}<br><b>${Math.round((zsec[z.k]||0)/60)}</b></div>`).join('')}</div>`;
+  if (trend.length >= 2) h += `<div class="smallLbl" style="margin-top:16px">Average watts and technique score, last ${trend.length} erg sessions</div>${trendChart([{data:trend.map(s=>s.avg_power), col:IK, lbl:'W'}, {data:trend.map(s=>s.score), col:MG, lbl:'score', right:true}])}`;
+  h += `<div class="btnRow"><button class="solid" id="dAdd">+ Add training</button></div><div id="dForm"></div><div style="margin-top:12px">`;
+  h += ss.length ? ss.map(s=>{ const d=new Date(s.started_at); const pace = s.distance&&s.duration ? fmtPace(s.duration/(s.distance/500)) : null; const z = s.zone && ZONES.find(x=>x.k===s.zone);
+    return `<div class="sess"><div class="sT">${d.toLocaleDateString('sv-SE')} ${d.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})} · ${KINDS[s.kind||'erg']}${z?` <span class="tag" style="background:${z.col};border-color:${z.col}">${z.k}</span>`:''}</div>
+      <div class="sM">${[s.distance?s.distance+' m':'', s.duration?fmtTime(s.duration).replace(/\.\d$/,''):'', pace?pace+' /500 m':'', s.avg_power?s.avg_power+' W':'', s.avg_hr?s.avg_hr+' bpm':'', s.score!=null?'score '+s.score:'', s.rpe?'RPE '+s.rpe:''].filter(Boolean).join(' · ')}${s.notes?`<br>${esc(s.notes)}`:''}</div>
+      <div class="btnRow">${(s.kind||'erg')==='erg'?`<button data-open="${s.id}">Analysis</button>`:''}${s.local?'':`<button data-edit="${s.id}">Edit</button>`}<button data-del="${s.id}">Delete</button></div>${DIARY.edit===s.id?editForm(s):''}</div>`; }).join('')
+    : `<p class="hint">Nothing here yet. Row with the PM5 and tap <b>Stop &amp; save</b>, or add other training.</p>`;
+  lp.innerHTML = h + '</div>';
+  $('dAdd').onclick = ()=>{ DIARY.adding=!DIARY.adding; $('dForm').innerHTML = DIARY.adding ? editForm(null) : ''; bindForm(null); };
+  lp.querySelectorAll('[data-open]').forEach(b=>b.onclick=async ()=>{ const s = ss.find(x=>x.id===b.dataset.open); if (s.local) { showView('tech'); return renderTech(s._local); }
+    if (!DIARY.full[s.id]){ const all = await API.mySessions(TEAM.token, true); for (const x of all) DIARY.full[x.id]=x; }
+    const f = DIARY.full[s.id]; showView('tech'); renderTech({ start:new Date(f.started_at).getTime(), strokes:f.strokes||[] }); });
+  lp.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{ DIARY.edit = DIARY.edit===b.dataset.edit ? null : b.dataset.edit; renderLog(); });
+  lp.querySelectorAll('[data-del]').forEach(b=>b.onclick=async ()=>{ if(!b.dataset.arm){ b.dataset.arm=1; b.textContent='Tap again'; return; } const s=ss.find(x=>x.id===b.dataset.del); if (s.local){ S.sessions=S.sessions.filter(x=>x.id!==s.id); save(); } else { await API.deleteSession(TEAM.token, s.id); DIARY.cache=null; } renderLog(); });
+  if (DIARY.edit) bindForm(ss.find(x=>x.id===DIARY.edit));
+}
+function editForm(s){
+  const v = s || { kind:'water', duration:3600 };
+  const dt = s ? null : new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,16);
+  return `<div class="panel" id="eForm" style="margin:10px 0">${s?'':`<div class="field"><div class="fl">When</div><input type="text" id="eWhen" value="${dt}" style="width:190px"></div>`}
+    <div class="field"><div class="fl">Kind</div><select id="eKind">${Object.entries(KINDS).map(([k,l])=>`<option value="${k}" ${v.kind===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    ${s&&s.kind==='erg'?'':`<div class="field"><div class="fl">Duration</div><input type="number" id="eDur" value="${v.duration?Math.round(v.duration/60):''}"><div class="fu">min</div></div>
+    <div class="field"><div class="fl">Distance</div><input type="number" id="eDist" value="${v.distance||''}"><div class="fu">m</div></div>
+    <div class="field"><div class="fl">Average heart rate</div><input type="number" id="eHr" value="${v.avg_hr||''}"><div class="fu">bpm</div></div>`}
+    <div class="field"><div class="fl">Zone<small>blank = from heart rate</small></div><select id="eZone"><option value="">auto</option>${ZONES.map(z=>`<option ${v.zone===z.k?'selected':''}>${z.k}</option>`).join('')}</select></div>
+    <div class="field"><div class="fl">How hard? RPE<small>1 = very easy · 10 = max</small></div><input type="number" id="eRpe" min="1" max="10" value="${v.rpe||''}"></div>
+    <div class="field" style="display:block"><div class="fl">Notes</div><textarea id="eNotes" style="min-height:70px;margin-top:6px">${esc(v.notes||'')}</textarea></div>
+    <div class="btnRow"><button class="solid" id="eSave">Save</button></div></div>`;
+}
+function bindForm(s){
+  const b = $('eSave'); if (!b) return;
+  b.onclick = async ()=>{
+    if (!TEAM.token){ toast('Join your team to use the diary'); return; }
+    const g = id => $(id) ? $(id).value : undefined, num = id => g(id)!==undefined && g(id)!=='' ? +g(id) : undefined;
+    const hr = num('eHr') ?? (s && s.avg_hr), z = g('eZone') || (zoneOf(profileHR(), hr)||{}).k || null;
+    const o = { kind:g('eKind'), zone:z, rpe:num('eRpe')??null, notes:g('eNotes')||null };
+    if ($('eDur')) Object.assign(o, { duration:num('eDur')!=null?num('eDur')*60:null, distance:num('eDist')??null, avg_hr:hr??null });
+    if (s) o.id = s.id; else o.started_at = new Date(g('eWhen')).toISOString();
+    try{ await API.saveSession(TEAM.token, o); DIARY.cache=null; DIARY.edit=null; DIARY.adding=false; toast('Saved'); renderLog(); }catch(e){ toast(e.message); }
+  };
+}
+function trendChart(series, opt={}){
+  const W=340, H=150, L=34, R=34, T=10, B=18, n = Math.max(...series.map(s=>s.data.length));
+  const X = i => L + (n<=1?0:i/(n-1))*(W-L-R);
+  let g = '';
+  series.forEach((s,si)=>{ const vals = s.data.filter(v=>v!=null); if (!vals.length) return; let lo=Math.min(...vals), hi=Math.max(...vals); if (hi-lo<1){ hi+=1; lo-=1; } const pad=(hi-lo)*0.15; lo-=pad; hi+=pad;
+    const Y = v => T + (1-(v-lo)/(hi-lo))*(H-T-B);
+    const pts = s.data.map((v,i)=>v==null?null:[X(i),Y(v)]).filter(Boolean);
+    g += `<path d="${pts.map((p,i)=>`${i?'L':'M'}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join('')}" fill="none" stroke="${s.col}" stroke-width="2.2"/>` + pts.map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="2.6" fill="${s.col}"/>`).join('');
+    g += `<text x="${s.right?W-R+4:L-4}" y="${Y(hi-pad)+3}" font-size="9" fill="${s.col}" text-anchor="${s.right?'start':'end'}">${Math.round(hi-pad)}</text><text x="${s.right?W-R+4:L-4}" y="${Y(lo+pad)+3}" font-size="9" fill="${s.col}" text-anchor="${s.right?'start':'end'}">${Math.round(lo+pad)}</text><text x="${s.right?W-R+4:L-4}" y="${H-4}" font-size="9" fill="${s.col}" text-anchor="${s.right?'start':'end'}">${s.lbl}</text>`; });
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" font-family="Chivo Mono,monospace">${g}</svg>`;
+}
+
+// --- start ---
+applyLp(['sess','banner']);
+fillProfile(); refreshProg();
+if (URLTEAM && !TEAM.token){ TEAM.code = URLTEAM.toUpperCase(); API.roster(TEAM.code).then(r=>{ if (r && r.team){ TEAM.team=r.team.name; joinState={step:'roster',roster:r,pick:null,pin:''}; } renderTeam(); }).catch(()=>renderTeam()); }
+else if (TEAM.token) { renderTeam(); afterLogin(); }
+else { if (TEAM.code) API.roster(TEAM.code).then(r=>{ if (r&&r.team){ joinState={step:'roster',roster:r,pick:null,pin:''}; } renderTeam(); }).catch(()=>renderTeam()); renderTeam(); }
+
+// ================= Phone: join the coach's workout, play it in landscape =================
+const WKA = { m:null, recv:0, joined:false, R:newRun(), last:[], fx:[], anchor:null, idx:-1, card:0, done:false, saved:false, av:null, raf:0 };
+try{ WKA.av = JSON.parse(localStorage.getItem('ergcoach.avatar')||'null'); }catch(e){}
+const myAv = ()=> WKA.av || (WKA.av = avDefault(TEAM.athlete ? TEAM.athlete.id : 'me'));
+function athWk(m){
+  const first = !WKA.m || WKA.m.sid!==m.sid;
+  if (first){ Object.assign(WKA, { joined:false, R:newRun(), last:[], fx:[], anchor:null, idx:-1, done:false, saved:false, dismissed:false }); }
+  WKA.m = m; WKA.recv = Date.now();
+  if (WKA.dismissed) return;
+  if (m.status==='run' && m.idx!==WKA.idx){ WKA.idx = m.idx; WKA.anchor = null; WKA.card = Date.now(); if (navigator.vibrate) navigator.vibrate([60,40,60]); }
+  if (m.status==='done' && !WKA.done){ WKA.done = true; finishWk(); }
+  $('sess').classList.remove('hidden'); document.body.classList.add('inSess');
+  const sig = m.status+'|'+m.players.map(p=>p.id+JSON.stringify(p.av)).join(',');
+  if (m.status==='lobby' || !WKA.joined){ if (sig!==WKA.sig || !$('wkIn')) renderLobby(); } else if (m.status==='run') startPlay();
+  WKA.sig = sig;
+}
+const curStep = ()=> WKA.m && WKA.m.status==='run' ? WKA.m.steps[WKA.m.idx] : null;
+const stepEl = ()=> WKA.m ? WKA.m.el + (Date.now()-WKA.recv)/1000 : 0;
+
+// ---------- lobby: pick a face, connect, I'm in ----------
+function renderLobby(){
+  stopPlay(); const m = WKA.m, av = myAv();
+  const pick = (k, n, f) => `<div class="pk">${Array.from({length:n},(_,i)=>`<button data-k="${k}" data-v="${i}" class="${av[k]===i?'on':''}">${f(i)}</button>`).join('')}</div>`;
+  const others = m.players.filter(p=>!TEAM.athlete || p.id!==TEAM.athlete.id);
+  $('sessIn').innerHTML = `<div class="lob"><div class="lobL">${avatarSVG(av,150)}<div class="lobName">${esc(TEAM.athlete?TEAM.athlete.name:'')}</div>
+      <button class="big ${WKA.joined?'':'go'}" id="wkIn">${WKA.joined ? (m.status==='run' ? 'Back in' : 'You are in ✓') : "I'm in"}</button>
+      <div class="lobPm">${PM.connected ? 'PM5 connected' : DEMO.on ? 'Demo rowing' : '<button id="wkPm">Connect PM5</button> <button id="wkDemo">Demo</button>'}</div></div>
+    <div class="lobR"><div class="lobT">${esc(m.name)}</div><div class="lobS">${m.steps.length} steps · ${m.status==='run' ? 'running now, jump in' : 'waiting for the coach to start'}</div>
+      <div class="lbl2">Cap</div>${pick('c',10,i=>`<i style="background:${AV_CAPS2[i]}"></i>`)}
+      <div class="lbl2">Skin</div>${pick('s',5,i=>`<i style="background:${AV_SKIN2[i]}"></i>`)}
+      <div class="lbl2">Face</div>${pick('f',5,i=>AV_FACE[i])}
+      <div class="lbl2">Extra</div>${pick('a',6,i=>AV_ACC[i])}
+      <div class="lbl2">In the room · ${m.players.length}</div><div class="crew">${others.map(p=>`<span>${avatarSVG(p.av,44)}<small>${esc(p.name)}</small></span>`).join('') || '<small>nobody else yet</small>'}</div></div></div>`;
+  $('sessIn').querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{ av[b.dataset.k] = +b.dataset.v; localStorage.setItem('ergcoach.avatar', JSON.stringify(av)); if (WKA.joined) sendJoin(); renderLobby(); });
+  $('wkIn').onclick = ()=>{ WKA.joined = true; sendJoin(); goLandscape(); if (m.status==='run') startPlay(); else renderLobby(); };
+  if ($('wkPm')) $('wkPm').onclick = ()=>$('btnConnect').click();
+  if ($('wkDemo')) $('wkDemo').onclick = ()=>{ if (!DEMO.on) $('btnDemo').click(); renderLobby(); };
+}
+function sendJoin(){ if (RT && TEAM.athlete && WKA.m) RT.send({ type:'join', sid:WKA.m.sid, ...me(), av:myAv() }); }
+async function wakeLock(){ try{ if ('wakeLock' in navigator && !WKA.wl) { WKA.wl = await navigator.wakeLock.request('screen'); WKA.wl.addEventListener('release', ()=>WKA.wl=null); } }catch(e){} }
+document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState==='visible' && WKA.joined) wakeLock(); });
+function goLandscape(){ wakeLock(); const d = document.documentElement; if (d.requestFullscreen && !document.fullscreenElement) d.requestFullscreen().then(()=>screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(()=>{})).catch(()=>{}); }
+$('sessX').onclick = ()=>{ WKA.dismissed = true; stopPlay(); $('sess').classList.add('hidden'); document.body.classList.remove('inSess'); if (document.fullscreenElement) document.exitFullscreen(); };
+
+// ---------- judging every stroke ----------
+HOOKS.stroke.push(s=>{
+  const st = curStep(); if (!st || !WKA.joined || WKA.done) return;
+  if (!WKA.anchor) WKA.anchor = s.t;
+  const normal = (MY.P && MY.P.normal) || WKA.selfNormal || (WKA.selfNormal = null);
+  if (!normal && s.power){ WKA.early = (WKA.early||[]).concat(s.power); if (WKA.early.length>=8) WKA.selfNormal = median(WKA.early); }
+  const j = judge(s, st, normal);
+  WKA.last.push({ c:s.curve, g:j ? j.g : null, at:performance.now() }); if (WKA.last.length>4) WKA.last.shift();
+  if (!j) return;
+  scoreStroke(WKA.R, j);
+  WKA.fx.push({ g:j.g, why:j.why, at:performance.now(), combo:WKA.R.combo, mult:WKA.R.mult });
+  if (j.g===3 && navigator.vibrate) navigator.vibrate(25);
+  if (RT && TEAM.athlete) RT.send({ type:'hit', sid:WKA.m.sid, ...me(), g:j.g, why:j.why, R:{...WKA.R, hits:[...WKA.R.hits]} });
+});
+
+// ---------- the game screen (landscape canvas) ----------
+const INKc = LP.ink, CRM = LP.cream, LPF = "'Josefin Sans', sans-serif";
+function startPlay(){
+  if (!$('wkCv')){ $('sessIn').innerHTML = `<canvas id="wkCv"></canvas><div class="turn">Turn your phone sideways ⟲</div>`; }
+  if (!WKA.raf) WKA.raf = requestAnimationFrame(drawPlay);
+}
+function stopPlay(){ cancelAnimationFrame(WKA.raf); WKA.raf = 0; }
+function tx(g, s, x, y, size, fill, align='center', bold=true){ g.font = `${bold?700:400} ${size}px ${LPF}`; g.textAlign = align; g.textBaseline = 'middle'; g.fillStyle = fill; g.fillText(s,x,y+size*0.06); }
+function box(g,x,y,w,h,fill,r=4){ g.save(); g.shadowColor='rgba(59,53,96,.35)'; g.shadowBlur=18; g.shadowOffsetY=6; g.beginPath(); g.roundRect(x,y,w,h,Math.min(r,4)); g.fillStyle=fill; g.fill(); g.restore(); }
+function drawPlay(now){
+  WKA.raf = 0; const cv = $('wkCv'); if (!cv || $('sess').classList.contains('hidden')) return; WKA.raf = requestAnimationFrame(drawPlay);
+  const dpr = devicePixelRatio||1, W = cv.clientWidth, H = cv.clientHeight; if (cv.width!==Math.round(W*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  const g = cv.getContext('2d'); g.setTransform(dpr,0,0,dpr,0,0);
+  const m = WKA.m, st = curStep(); if (!st) return;
+  lpSky(g, W, H); lpSun(g, W*0.62, H*0.52, 22); lpMountains(g, W, H*0.72, H*0.32, LP.hills[1], 21, 0, 6, 0.06); lpMountains(g, W, H*0.86, H*0.26, LP.hills[3], 33, 0, 8, 0.08); g.fillStyle = LP.hills[5]; g.fillRect(0, H*0.86, W, H);
+  const P = 10, top = 34, laneW = Math.round(W*0.2), cx0 = laneW + 2*P, cw = Math.round(W*0.5), hx = cx0 + cw + P, hw = W - hx - P;
+  // step strip
+  const tot = m.steps.reduce((a,x)=>a+(x.type==='time'?Math.max(1,x.v/60):Math.max(1,x.v/250)),0); let sx = P;
+  m.steps.forEach((x,i)=>{ const w = (W-2*P)*(x.type==='time'?Math.max(1,x.v/60):Math.max(1,x.v/250))/tot - 3; g.fillStyle = i<m.idx ? LP.teal : x.focus==='easy' ? 'rgba(255,246,236,.18)' : 'rgba(255,246,236,.4)'; g.beginPath(); g.moveTo(sx,8); g.lineTo(sx+w,8); g.lineTo(sx+w-4,20); g.lineTo(sx,20); g.closePath(); g.fill();
+    if (i===m.idx){ const f = x.type==='time' ? clamp(stepEl()/x.v,0,1) : clamp(((LIVE.dist||0)-(WKA.d0??(WKA.d0=LIVE.dist||0)))/x.v,0,1); g.fillStyle=LP.gold; g.fillRect(sx,8,(w-4)*f,12); } sx += w+3; });
+  if (WKA.dIdx!==m.idx){ WKA.dIdx = m.idx; WKA.d0 = LIVE.dist||0; }
+  // ---- note highway ----
+  box(g, P, top, laneW, H-top-P, st.focus==='easy' ? 'rgba(59,53,96,.35)' : 'rgba(59,53,96,.78)');
+  const tr = st.rate ? (st.rate[0]+st.rate[1])/2 : 20, per = 60/tr, hitY = H - P - 46, speed = (hitY-top)/(per*2.6);
+  g.save(); g.beginPath(); g.roundRect(P+3, top+3, laneW-6, H-top-P-6, 13); g.clip();
+  for (let y = top + ((now/1000*speed*0.6) % 30); y < H; y += 30){ g.strokeStyle='rgba(248,238,213,.08)'; g.lineWidth=2; g.beginPath(); g.moveTo(P+laneW*0.2,y); g.lineTo(P+laneW*0.8,y); g.stroke(); }
+  if (st.focus!=='easy'){
+    const nowT = Date.now(), anc = WKA.anchor || (WKA.recv - m.el*1000);
+    for (let k = Math.floor((nowT-anc)/1000/per) - 1; k < Math.floor((nowT-anc)/1000/per) + 4; k++){
+      const tt = anc/1000 + k*per, y = hitY - (tt - nowT/1000)*speed; if (y < top-20 || y > H) continue;
+      const nx = P+laneW/2, nw = laneW*0.3; g.fillStyle = LP.gold; g.beginPath(); g.moveTo(nx-nw,y); g.lineTo(nx,y-12); g.lineTo(nx+nw,y); g.lineTo(nx,y+12); g.closePath(); g.fill(); g.fillStyle = shadeC(LP.gold,-0.2); g.beginPath(); g.moveTo(nx,y-12); g.lineTo(nx+nw,y); g.lineTo(nx,y+12); g.closePath(); g.fill(); }
+  }
+  g.restore();
+  g.lineWidth = 3; g.strokeStyle = CRM; g.beginPath(); g.moveTo(P+8, hitY); g.lineTo(P+laneW-8, hitY); g.stroke();
+  tx(g, st.focus==='easy' ? 'EASY' : `${st.rate[0]===st.rate[1]?st.rate[0]:st.rate[0]+'–'+st.rate[1]}`, P+laneW/2, H-P-20, 18, CRM);
+  tx(g, st.focus==='easy' ? '' : 'SPM', P+laneW/2, H-P-6, 9, 'rgba(255,246,236,.6)', 'center', false);
+  const lastFx = WKA.fx[WKA.fx.length-1], fxAge = lastFx ? (performance.now()-lastFx.at)/1000 : 9;
+  if (fxAge < 0.5){ g.save(); g.globalAlpha = 1-fxAge*2; g.fillStyle = GCOL[lastFx.g]; for (let i=0;i<8;i++){ const a=i/8*Math.PI*2, r=20+fxAge*90; g.beginPath(); g.arc(P+laneW/2+Math.cos(a)*r, hitY+Math.sin(a)*r*0.5, 6, 0, 7); g.fill(); } g.restore(); }
+  // live rate under the lane
+  if (LIVE.rate && st.focus!=='easy'){ tx(g, String(LIVE.rate), P+laneW/2, top+24, 22, LIVE.rate>=st.rate[0]-0.5 && LIVE.rate<=st.rate[1]+0.5 ? LP.teal : LP.gold); tx(g, 'YOU', P+laneW/2, top+44, 9, 'rgba(255,246,236,.6)','center',false); }
+  // ---- curve stage ----
+  box(g, cx0, top, cw, H-top-P, 'rgba(255,246,236,.94)');
+  const gx = cx0+18, gy = top+46, gw = cw-36, gh = H-top-P-70;
+  if (st.focus==='easy'){
+    tx(g, 'Easy rowing', cx0+cw/2, top+gh/2, 34, LP.teal);
+    const z = zoneOf(profileHR(), LIVE.hr); tx(g, LIVE.hr ? `${LIVE.hr} bpm${z?' · '+z.k:''}` : 'breathe, row light', cx0+cw/2, top+gh/2+40, 16, INKc, 'center', false);
+    const nx = m.steps[m.idx+1]; if (nx) tx(g, `Next: ${nx.n} · ${FOCUS[nx.focus].t}`, cx0+cw/2, top+gh/2+70, 13, '#6b5a45', 'center', false);
+  } else {
+    tx(g, FOCUS[st.focus].t.toUpperCase()+' · '+FOCUS[st.focus].d, cx0+cw/2, top+20, 11, INKc, 'center', false);
+    const X = i => gx + i/(IDEAL.length-1)*gw, Y = v => gy + gh - v*gh*0.92;
+    // target band
+    g.beginPath(); IDEAL.forEach((v,i)=>{ i?g.lineTo(X(i),Y(v*1.08)):g.moveTo(X(i),Y(v*1.08)); }); for (let i=IDEAL.length-1;i>=0;i--) g.lineTo(X(i),Y(IDEAL[i]*0.86)); g.closePath();
+    g.fillStyle = 'rgba(255,181,71,.32)'; g.fill(); g.lineWidth=1.5; g.strokeStyle='rgba(224,122,85,.6)'; g.stroke();
+    g.lineWidth=2; g.strokeStyle=INKc; g.beginPath(); g.moveTo(gx,gy+gh); g.lineTo(gx+gw,gy+gh); g.stroke();
+    WKA.last.forEach((L,i)=>{ if (!L.c) return; const r = resample(L.c, IDEAL.length), mx = Math.max(...r)||1, latest = i===WKA.last.length-1;
+      g.save(); g.globalAlpha = latest ? 1 : 0.18 + i*0.08; g.beginPath(); r.forEach((v,k)=>{ k?g.lineTo(X(k),Y(v/mx)):g.moveTo(X(k),Y(v/mx)); });
+      g.lineWidth = latest ? 5 : 2.5; g.lineJoin='round'; g.strokeStyle = latest ? (L.g!=null ? shadeC(GCOL[L.g],-0.12) : LP.teal) : LP.ink; g.stroke(); g.restore(); });
+    tx(g, 'CATCH', gx+2, gy+gh+12, 9, '#6b6680', 'left', false); tx(g, 'FINISH', gx+gw-2, gy+gh+12, 9, '#6b6680', 'right', false);
+    if (lastFx && fxAge < 1.6){ const sc = 1 + Math.max(0, 0.6 - fxAge*2.2), a = fxAge>1.1 ? (1.6-fxAge)*2 : 1;
+      g.save(); g.globalAlpha = a; g.translate(cx0+cw/2, top+gh*0.42); g.rotate(-0.06); g.scale(sc,sc); tx(g, GRADES[lastFx.g], 0, 0, 40, shadeC(GCOL[lastFx.g],-0.1)); g.restore();
+      if (lastFx.why && lastFx.g<2){ g.save(); g.globalAlpha=a; tx(g, lastFx.why, cx0+cw/2, top+gh*0.42+38, 14, INKc, 'center', false); g.restore(); } }
+  }
+  // ---- HUD ----
+  box(g, hx, top, hw, 48, LP.rose); g.save(); g.beginPath(); g.rect(hx+4,top,hw-8,48); g.clip(); tx(g, st.n, hx+hw/2, top+18, 15, CRM); g.restore();
+  const el = stepEl(), clock = st.type==='time' ? fmtTime(Math.max(0, st.v-el)).replace(/\.\d$/,'') : `${Math.max(0, Math.round(st.v - ((LIVE.dist||0)-(WKA.d0||0))))} m`;
+  tx(g, clock, hx+hw/2, top+37, 14, LP.cream, 'center', false);
+  const R = WKA.R, cy = top + 60;
+  box(g, hx, cy, hw, H-cy-P, 'rgba(59,53,96,.78)');
+  tx(g, String(R.score), hx+hw/2, cy+26, 26, CRM); tx(g, 'POINTS', hx+hw/2, cy+46, 9, 'rgba(255,246,236,.6)', 'center', false);
+  const pulse = lastFx && fxAge < 0.3 ? 1 + (0.3-fxAge) : 1;
+  g.save(); g.translate(hx+hw/2, cy+90); g.scale(pulse,pulse); tx(g, R.combo ? String(R.combo) : '–', 0, 0, 38, R.combo>=10 ? LP.gold : CRM); g.restore();
+  tx(g, 'COMBO', hx+hw/2, cy+118, 10, 'rgba(255,246,236,.6)', 'center', false);
+  const mult = R.mult || 1; g.fillStyle = mult>1 ? LP.gold : 'rgba(255,246,236,.25)'; g.beginPath(); for (let k=0;k<6;k++){ const a=-Math.PI/2+k/6*Math.PI*2; g.lineTo(hx+hw/2+Math.cos(a)*21, cy+152+Math.sin(a)*21); } g.closePath(); g.fill(); tx(g, '×'+mult, hx+hw/2, cy+153, 16, INKc, 'center', false);
+  const nb = 10 - (R.combo % 10); if (mult<4) tx(g, `${nb} to ×${mult+1}`, hx+hw/2, cy+184, 9, 'rgba(255,246,236,.6)', 'center', false);
+  if (R.n) tx(g, `${Math.round((R.acc||0)*100)}% ACCURACY`, hx+hw/2, H-P-14, 10, CRM, 'center', false);
+  // power gauge for power steps
+  if (st.focus==='power' && st.pw){ const n = (MY.P && MY.P.normal) || WKA.selfNormal, w = LIVE.watt||0, lo = 70, hi = 150, p = n ? w/n*100 : null; const gx2 = cx0+cw-22, gy2 = top+40, gh2 = gh;
+    const Yp = v => gy2 + gh2 - (clamp(v,lo,hi)-lo)/(hi-lo)*gh2; g.fillStyle='#fffaf0'; g.fillRect(gx2-8,gy2,16,gh2); g.fillStyle='rgba(91,140,58,.6)'; g.fillRect(gx2-8,Yp(st.pw[1]),16,Yp(st.pw[0])-Yp(st.pw[1])); g.lineWidth=2; g.strokeStyle=INKc; g.strokeRect(gx2-8,gy2,16,gh2);
+    if (p){ g.fillStyle='#c8352b'; g.beginPath(); g.moveTo(gx2-14,Yp(p)); g.lineTo(gx2-4,Yp(p)-6); g.lineTo(gx2-4,Yp(p)+6); g.closePath(); g.fill(); g.stroke(); tx(g, `${Math.round(p)}%`, gx2-18, Yp(p), 10, INKc, 'right', false); } }
+  // next-step title card
+  const ca = (Date.now()-WKA.card)/1000;
+  if (ca < 3.5){ g.save(); g.fillStyle = 'rgba(59,53,96,.88)'; g.fillRect(0,0,W,H); g.translate(W/2, H/2);
+    tx(g, m.idx ? 'N E X T   U P' : 'H E R E   W E   G O', 0, -H*0.2, 12, 'rgba(255,246,236,.75)', 'center', false);
+    tx(g, st.n, 0, -H*0.05, 40, CRM); tx(g, `${FOCUS[st.focus].t} · ${stepTarget(st)} · ${stepLen(st)}`.toUpperCase(), 0, H*0.08, 12, LP.gold, 'center', true); tx(g, String(Math.ceil(3.5-ca)), 0, H*0.24, 44, CRM, 'center', false); g.restore(); }
+}
+
+// ---------- the end: awards, style, twin, save ----------
+async function finishWk(){
+  stopPlay(); const r = (WKA.m.res||{})[TEAM.athlete && TEAM.athlete.id] || {}, R = WKA.R, sty = r.style ? STYLES[r.style] : null;
+  $('sessIn').innerHTML = `<div class="lob"><div class="lobL">${avatarSVG(myAv(),130)}<div class="lobName">${R.score} pts</div><div class="lobS">${R.n} strokes · best combo ${R.maxCombo} · ${Math.round((R.acc||0)*100)}% accuracy</div>
+      <div class="hits">${GRADES.map((t,i)=>`<span style="background:${GCOL[i]}">${t} ${R.hits[i]}</span>`).reverse().join('')}</div></div>
+    <div class="lobR"><div class="lobT">Workout done!</div>${r.imp!=null ? `<div class="lobS" style="font-size:16px;color:#ffb547">${r.imp>=0?'+':''}${Math.round(r.imp)} accuracy vs your usual</div>` : '<div class="lobS">Your first coached workout: this is your baseline.</div>'}
+      ${sty?`<div class="lbl2">Your rowing style</div><div class="sty"><b>${esc(sty.t)}</b> · ${esc(sty.d)}</div>`:''}
+      ${r.twin?`<div class="lbl2">You row most like</div><div class="sty"><b>${esc(r.twin.name)}</b> · ${r.twin.sim}% alike in curve, power, rate and badges</div>`:''}
+      <div class="lbl2">Badges from this workout</div><div class="crew">${(r.earned||[]).map(b=>`<span>${badgeSVG(b,true,58)}<small>${esc(BADGES[b].t)}</small></span>`).join('') || '<small>None this time. Long combos and clean curves earn them.</small>'}</div>
+      <div class="lbl2" id="wkSaveMsg">Saving to your diary…</div><button id="wkClose">Close</button></div></div>`;
+  $('wkClose').onclick = ()=>$('sessX').click();
+  if (!WKA.saved && LIVE.strokes.length >= 5){ WKA.saved = true; LIVE.game = { score:R.score, maxCombo:R.maxCombo, maxP:R.maxP, maxBeat:R.maxBeat, acc:R.acc, n:R.n, done:true, plan:WKA.m.name };
+    const ok = await saveCloud(LIVE); $('wkSaveMsg').textContent = ok ? 'Saved to your diary' : 'Not saved: log in to your team to keep it'; }
+  else $('wkSaveMsg').textContent = '';
+}
+
+btCheck(); pmUi(); window.EC={LIVE,S,PM,DEMO,VID,TEAM,API,analyseVideo,summarize,findings,curveMetrics,addStroke,showView,videoFindings,saveCloud};
+</script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Erg Coach · Coach</title>
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@300;400;700;900&family=Ultra&family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --paper:#fff; --ink:#2e2e2e; --mid:#757575; --soft:#ededed; --mg:#FD08FF; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; background:var(--paper); color:var(--ink); font-family:'Chivo Mono',ui-monospace,monospace; font-size:14px; }
+  button{ border:2px solid var(--ink); border-radius:8px; background:var(--paper); color:var(--ink); font:700 12px 'Chivo Mono',monospace; letter-spacing:.5px; text-transform:uppercase; padding:10px 14px; min-height:42px; cursor:pointer; }
+  button.solid{ background:var(--ink); color:var(--paper); }
+  button.mg{ background:var(--mg); border-color:var(--mg); color:#fff; }
+  button:disabled{ opacity:.35; cursor:default; }
+  input, select, textarea{ font:400 15px 'Chivo Mono',monospace; border:2px solid var(--ink); border-radius:8px; padding:8px 10px; min-height:42px; background:#fff; color:var(--ink); }
+  input[type=checkbox]{ min-height:0; width:18px; height:18px; accent-color:var(--ink); vertical-align:-3px; }
+  h2{ font-size:12px; letter-spacing:2.5px; text-transform:uppercase; font-weight:400; margin:0 0 12px; }
+  .hint{ color:var(--mid); font-size:12px; line-height:1.55; }
+  .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .panel{ border:2px solid var(--ink); border-radius:14px; padding:16px; margin-bottom:16px; background:#fff; }
+  .hidden{ display:none !important; }
+  .lbl{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:var(--mid); }
+
+  /* login */
+  #login{ max-width:460px; margin:8vh auto; padding:0 16px; }
+  #login .brand{ font-weight:900; letter-spacing:4px; font-size:22px; margin-bottom:4px; }
+  #login label{ display:block; margin:12px 0 4px; }
+  #login input{ width:100%; }
+
+  /* app */
+  #app{ display:grid; grid-template-columns:250px 1fr; grid-template-rows:auto 1fr; min-height:100vh; }
+  #top{ grid-column:1/3; display:flex; align-items:center; gap:16px; border-bottom:2px solid var(--ink); padding:10px 18px; position:sticky; top:0; background:#fff; z-index:5; }
+  #top .brand{ font-weight:900; letter-spacing:4px; }
+  #top .team{ color:var(--mid); }
+  #tabs{ display:flex; gap:6px; margin-left:auto; }
+  #tabs button{ border-color:transparent; }
+  #tabs button.active{ border-color:var(--ink); background:var(--soft); }
+  #side{ padding:14px; overflow:auto; max-height:calc(100vh - 64px); position:sticky; top:64px; align-self:start; }
+  #main{ border-left:2px solid var(--ink); }
+  #side .ath{ display:flex; align-items:center; gap:8px; padding:7px 4px; border-bottom:1px solid var(--soft); cursor:pointer; }
+  #side .ath .nm{ flex:1; }
+  #side .dot{ width:9px; height:9px; border-radius:50%; border:2px solid var(--ink); }
+  #side .dot.on{ background:var(--mg); border-color:var(--mg); }
+  #side .sw{ width:10px; height:10px; border-radius:2px; }
+  #main{ padding:18px; min-width:0; }
+
+  /* live tiles */
+  .tiles{ display:grid; grid-template-columns:repeat(auto-fill, minmax(230px,1fr)); gap:12px; }
+  .tile{ border:2px solid var(--ink); border-radius:12px; padding:12px; position:relative; }
+  .tile.off{ opacity:.35; }
+  .tile .nm{ font-weight:900; font-size:15px; display:flex; gap:8px; align-items:center; }
+  .tile .nm .sw{ width:12px; height:12px; border-radius:3px; }
+  .tile .nm small{ font-weight:300; color:var(--mid); font-size:11px; margin-left:auto; }
+  .tile .vals{ display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; margin-top:8px; }
+  .tile .v{ font-weight:900; font-size:24px; font-variant-numeric:tabular-nums; line-height:1.05; }
+  .tile .v.big{ font-size:clamp(22px, 2.1vw, 30px); }
+  .tile .l{ font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); }
+  .tile .zone{ display:inline-block; padding:2px 7px; border-radius:5px; font-weight:700; font-size:13px; }
+  .tile svg{ width:100%; height:auto; display:block; margin-top:6px; }
+  .tile .tech{ font-size:11px; color:var(--mid); margin-top:4px; }
+  .tile .tech b{ color:var(--mg); }
+  .toggles{ display:flex; flex-wrap:wrap; gap:6px; }
+  .toggles label{ border:2px solid var(--ink); border-radius:8px; padding:6px 9px; font-size:11px; text-transform:uppercase; letter-spacing:.5px; cursor:pointer; user-select:none; }
+  .toggles label.on{ background:var(--ink); color:#fff; }
+  .toggles input{ display:none; }
+  .chart{ display:block; width:100%; height:auto; border:2px solid var(--ink); border-radius:12px; background:#fff; }
+
+  /* games */
+  .gameCards{ display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+  .gameCards .panel{ cursor:pointer; margin:0; }
+  .gameCards .panel.sel{ background:var(--ink); color:#fff; }
+  .gameCards .panel.sel .hint{ color:#ccc; }
+  .gameCards b{ font-size:16px; }
+  .lanes{ margin-top:14px; }
+  .lane{ display:grid; grid-template-columns:150px 1fr 190px; gap:12px; align-items:center; padding:7px 0; border-bottom:1px solid var(--soft); }
+  .lane .nm{ font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lane .track{ position:relative; height:34px; border:2px solid var(--ink); border-radius:17px; background:repeating-linear-gradient(90deg,#fff 0 calc(10% - 1px),#e4e4e4 calc(10% - 1px) 10%); overflow:hidden; }
+  .lane .fill{ position:absolute; left:0; top:0; bottom:0; border-radius:15px 0 0 15px; transition:width .9s linear; }
+  .lane .boat{ position:absolute; top:5px; height:20px; transition:left .9s linear; }
+  .lane .res{ text-align:right; font-variant-numeric:tabular-nums; font-weight:700; }
+  .lane .res small{ display:block; font-weight:300; color:var(--mid); font-size:11px; }
+  .bigNum{ font-weight:900; font-size:64px; line-height:1; font-variant-numeric:tabular-nums; }
+  .teamBox{ border:2px solid var(--ink); border-radius:12px; padding:10px; }
+  .teamBox ol{ margin:6px 0 0; padding-left:20px; }
+  .teamBox li.act{ color:var(--mg); font-weight:900; }
+  .teamBox li.done{ text-decoration:line-through; color:var(--mid); }
+
+  /* analytics */
+  table.t{ border-collapse:collapse; width:100%; font-size:13px; }
+  table.t th{ text-align:left; font-weight:400; font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--mid); border-bottom:2px solid var(--ink); padding:6px 8px; cursor:pointer; white-space:nowrap; }
+  table.t td{ border-bottom:1px solid var(--soft); padding:7px 8px; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:1100px){ .grid2{ grid-template-columns:1fr; } }
+  .zbar{ display:flex; height:18px; border:2px solid var(--ink); border-radius:6px; overflow:hidden; }
+  .zbar span{ display:block; height:100%; }
+  .legend{ display:flex; flex-wrap:wrap; gap:12px; font-size:11px; color:var(--mid); margin-top:8px; }
+  .legend i{ display:inline-block; width:14px; height:4px; vertical-align:middle; margin-right:5px; }
+
+  /* roster */
+  .rosterRow{ display:grid; grid-template-columns:1.6fr 100px 100px 100px auto; gap:8px; align-items:center; padding:6px 0; border-bottom:1px solid var(--soft); }
+  .rosterRow input{ width:100%; }
+  #qr img{ width:180px; height:180px; image-rendering:pixelated; border:2px solid var(--ink); border-radius:10px; padding:6px; }
+
+  #toast{ position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(20px); background:var(--ink); color:#fff; padding:10px 16px; border-radius:10px; font-size:12px; letter-spacing:1px; text-transform:uppercase; opacity:0; transition:.25s; pointer-events:none; z-index:30; }
+  #toast.show{ opacity:1; transform:translateX(-50%); }
+
+  /* games + spotlight: 1930s cartoon skin */
+  #v-games, .toon{ --ink:#1b130d; background:#efe1bd; margin:-18px; padding:18px; min-height:calc(100vh - 64px);
+    background-image:radial-gradient(rgba(27,19,13,.06) 1px, transparent 1px); background-size:5px 5px; }
+  #v-games h2, #v-games b, #v-games .gameCards b{ font-family:Ultra, Georgia, serif; font-weight:400; letter-spacing:1px; }
+  #v-games .panel, .toon .panel{ background:#f8eed5; border:3px solid #1b130d; border-radius:18px 14px 20px 12px; box-shadow:5px 5px 0 #1b130d; }
+  #v-games .gameCards .panel{ transition:transform .15s; }
+  #v-games .gameCards .panel:hover{ transform:rotate(-1deg) translateY(-2px); }
+  #v-games .gameCards .panel.sel{ background:#c8352b; color:#f8eed5; }
+  #v-games .gameCards .panel.sel .hint{ color:#f8eed5; }
+  #v-games .gameCards b{ font-size:20px; }
+  #v-games button, .toon button{ border:3px solid #1b130d; box-shadow:3px 3px 0 #1b130d; background:#f8eed5; border-radius:12px; }
+  #v-games button:active, .toon button:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 #1b130d; }
+  #v-games button.solid, .toon button.solid{ background:#1b130d; color:#f8eed5; }
+  #v-games button.mg, .toon button.mg{ background:#e0a526; color:#1b130d; font-family:Ultra, Georgia, serif; font-size:15px; letter-spacing:1px; }
+  #v-games input, #v-games select, .toon select{ border:3px solid #1b130d; background:#fffaf0; }
+  #v-games .teamBox{ border:3px solid #1b130d; background:#f8eed5; box-shadow:3px 3px 0 #1b130d; }
+  #v-games .teamBox li.act{ color:#c8352b; }
+  #gfxBox{ border:3px solid #1b130d; border-radius:16px; overflow:hidden; box-shadow:5px 5px 0 #1b130d; line-height:0; }
+  #gfx{ display:block; }
+
+  .toon h2{ font-family:Ultra, Georgia, serif; font-weight:400; letter-spacing:1px; text-transform:none; }
+  .spGrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; margin-bottom:18px; }
+  .star{ background:#f8eed5; border:3px solid #1b130d; border-radius:18px 14px 20px 12px; box-shadow:5px 5px 0 #1b130d; padding:16px; position:relative; }
+  .star:nth-child(3n){ transform:rotate(-0.8deg); } .star:nth-child(3n+1){ transform:rotate(0.6deg); }
+  .star .who{ display:flex; align-items:center; gap:10px; font-family:Ultra, Georgia, serif; font-size:20px; }
+  .star .cap{ width:30px; height:30px; border-radius:50%; border:3px solid #1b130d; }
+  .star .big{ font-family:Ultra, Georgia, serif; font-size:32px; color:#c8352b; -webkit-text-stroke:1.5px #1b130d; margin:10px 0 2px; line-height:1.05; }
+  .star .line{ font-weight:700; font-size:15px; }
+  .star .sub{ color:#6b5a45; font-size:12px; margin-top:2px; }
+  .star ul{ margin:10px 0 0; padding:0; list-style:none; border-top:2px dashed #1b130d; padding-top:8px; font-size:12px; }
+  .star li{ padding:2px 0; }
+  .star .lv{ position:absolute; right:12px; top:12px; font-size:10px; text-transform:uppercase; letter-spacing:1px; text-align:right; }
+  .xpbar{ height:10px; border:2px solid #1b130d; border-radius:6px; background:#fffaf0; overflow:hidden; margin-top:4px; width:110px; }
+  .xpbar i{ display:block; height:100%; background:#e0a526; }
+  .liveStrip{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:18px; }
+  .liveStrip .pill{ background:#5b8c3a; color:#f8eed5; border:3px solid #1b130d; border-radius:30px; box-shadow:3px 3px 0 #1b130d; padding:8px 16px; font-family:Ultra, Georgia, serif; font-size:16px; }
+  .liveStrip .pill small{ font-family:'Chivo Mono',monospace; font-size:12px; margin-left:6px; }
+  #spShow{ position:fixed; inset:0; z-index:50; background:#c8352b; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  #spRays{ position:absolute; inset:-60%; background:repeating-conic-gradient(from 0deg, #c8352b 0 7.5deg, #e0a526 7.5deg 15deg); animation:spin 30s linear infinite; }
+  #spShow::after{ content:''; position:absolute; inset:0; background:radial-gradient(circle, transparent 45%, rgba(40,25,10,.6)); pointer-events:none; }
+  #spCard{ position:relative; z-index:1; background:#f8eed5; border:6px solid #1b130d; border-radius:30px 22px 34px 20px; box-shadow:10px 10px 0 #1b130d; padding:40px 60px; text-align:center; min-width:min(80vw,760px); animation:pop .5s ease-out, bob 1.2s ease-in-out .5s infinite alternate; }
+  #spCard .who{ font-family:Ultra, Georgia, serif; font-size:clamp(36px,5vw,64px); display:flex; gap:20px; align-items:center; justify-content:center; }
+  #spCard .cap{ width:60px; height:60px; border-radius:50%; border:5px solid #1b130d; }
+  #spCard .big{ font-family:Ultra, Georgia, serif; font-size:clamp(60px,10vw,140px); color:#c8352b; -webkit-text-stroke:4px #1b130d; line-height:1; margin:20px 0 10px; }
+  #spCard .line{ font-size:clamp(20px,2.4vw,34px); font-weight:700; }
+  #spCard .sub{ font-size:clamp(14px,1.6vw,22px); color:#6b5a45; margin-top:6px; }
+  #spBar{ position:absolute; left:0; bottom:0; height:10px; background:#1b130d; z-index:2; }
+  #spClose{ position:absolute; right:20px; top:20px; z-index:2; border:3px solid #1b130d; background:#f8eed5; box-shadow:3px 3px 0 #1b130d; }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @keyframes pop{ from{ transform:scale(.6) rotate(-6deg); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  @keyframes bob{ from{ transform:translateY(-4px) rotate(-.6deg); } to{ transform:translateY(4px) rotate(.6deg); } }
+
+  /* workout stage: built for a TV / projector, sizes in vw */
+  .stepRow{ display:grid; grid-template-columns:28px 1.6fr 100px 110px 130px 140px 150px 40px; gap:8px; align-items:center; padding:5px 0; border-bottom:1px dashed #b9a98c; }
+  .stepRow input, .stepRow select{ width:100%; min-height:38px; padding:4px 8px; font-size:14px; }
+  .stepRow .n{ font-family:Ultra, Georgia, serif; }
+  #wkBar{ position:fixed; left:0; right:0; bottom:0; z-index:40; display:flex; gap:10px; align-items:center; padding:10px 16px; background:#1b130d; }
+  #wkBar button{ min-height:44px; } #wkBar .lbl, #wkBar .hint{ color:#efe1bd; }
+  #wkStage{ position:relative; min-height:calc(100vh - 150px); padding-bottom:70px; }
+  body.tv #top, body.tv #side{ display:none; } body.tv #app{ grid-template-columns:1fr; } body.tv #main{ border:0; padding:0; } body.tv #v-wk{ margin:0; min-height:100vh; }
+  body.tv #wkStage{ min-height:100vh; }
+  .stHead{ display:grid; grid-template-columns:1fr auto; align-items:end; gap:2vw; padding:1.5vw 2vw 0; }
+  .stPlan{ font-size:max(14px,1.1vw); letter-spacing:.2em; text-transform:uppercase; }
+  .stName{ font-family:Ultra, Georgia, serif; font-size:max(34px,4.2vw); line-height:1; color:#c8352b; -webkit-text-stroke:max(1.5px,.12vw) #1b130d; }
+  .stTarget{ font-size:max(16px,1.5vw); font-weight:700; margin-top:.4vw; }
+  .stTarget .fc{ display:inline-block; background:#1b130d; color:#f8eed5; border-radius:30px; padding:.2vw 1vw; margin-right:.8vw; font-family:Ultra, Georgia, serif; font-weight:400; }
+  .stClock{ font-family:Ultra, Georgia, serif; font-size:max(48px,7vw); line-height:.9; -webkit-text-stroke:max(1.5px,.15vw) #1b130d; color:#f8eed5; text-shadow:.3vw .3vw 0 #1b130d; }
+  .stStrip{ display:flex; gap:.4vw; margin:1.2vw 2vw; }
+  .stStrip div{ flex:1; height:max(10px,.9vw); border:max(2px,.18vw) solid #1b130d; border-radius:1vw; background:#fffaf0; overflow:hidden; position:relative; }
+  .stStrip div.easy{ background:#e6dcc3; } .stStrip div.done{ background:#5b8c3a; } .stStrip div i{ position:absolute; inset:0; width:0; background:#e0a526; }
+  .stGrid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(max(170px,13vw),1fr)); gap:1.4vw; padding:0 2vw; }
+  .pt{ background:#f8eed5; border:max(3px,.22vw) solid #1b130d; border-radius:1.4vw 1vw 1.6vw .9vw; box-shadow:.35vw .35vw 0 #1b130d; padding:1vw; text-align:center; position:relative; animation:pop .5s ease-out; }
+  .pt .av{ width:max(70px,6.5vw); height:auto; }
+  .pt .nm{ font-family:Ultra, Georgia, serif; font-size:max(16px,1.5vw); }
+  .pt .ring{ position:absolute; right:.6vw; top:.6vw; width:max(40px,3.4vw); }
+  .pt .mult{ position:absolute; left:.6vw; top:.6vw; background:#e0a526; border:max(2px,.18vw) solid #1b130d; border-radius:50%; width:max(34px,2.8vw); height:max(34px,2.8vw); display:flex; align-items:center; justify-content:center; font-family:Ultra, Georgia, serif; font-size:max(14px,1.1vw); }
+  .pt .gr{ font-family:Ultra, Georgia, serif; font-size:max(18px,1.8vw); height:max(26px,2.3vw); -webkit-text-stroke:max(1px,.08vw) #1b130d; }
+  .pt .gr.hit{ animation:hit .6s ease-out; }
+  .pt .cb{ font-size:max(12px,1vw); font-weight:700; }
+  .pt.off{ opacity:.4; }
+  .pt .sty{ font-size:max(12px,.95vw); margin-top:.4vw; }
+  .pt .bdgs{ display:flex; flex-wrap:wrap; justify-content:center; gap:.2vw; margin-top:.5vw; } .pt .bdgs svg{ width:max(40px,3.4vw); height:auto; }
+  .ticker{ position:absolute; left:2vw; right:2vw; bottom:80px; display:flex; gap:1vw; overflow:hidden; }
+  .ticker span{ background:#1b130d; color:#f8eed5; border-radius:30px; padding:.4vw 1.2vw; font-size:max(14px,1.1vw); white-space:nowrap; animation:pop .4s ease-out; }
+  .lobby{ display:grid; grid-template-columns:minmax(260px,30vw) 1fr; gap:3vw; padding:2vw; }
+  .lobby .qrBox{ background:#f8eed5; border:max(3px,.25vw) solid #1b130d; border-radius:2vw 1.4vw 2.2vw 1.2vw; box-shadow:.5vw .5vw 0 #1b130d; padding:2vw; text-align:center; }
+  .lobby .qrBox img{ width:100%; max-width:26vw; image-rendering:pixelated; }
+  .lobby .code{ font-family:Ultra, Georgia, serif; font-size:max(40px,5vw); letter-spacing:.1em; color:#c8352b; -webkit-text-stroke:max(1.5px,.12vw) #1b130d; }
+  .nextCard{ position:fixed; inset:0; z-index:45; display:flex; align-items:center; justify-content:center; background:#c8352b; overflow:hidden; }
+  .nextCard::before{ content:''; position:absolute; inset:-60%; background:repeating-conic-gradient(from 0deg, #c8352b 0 7.5deg, #e0a526 7.5deg 15deg); animation:spin 30s linear infinite; }
+  .nextCard > div{ position:relative; background:#f8eed5; border:max(4px,.35vw) solid #1b130d; border-radius:2.4vw 1.6vw 2.6vw 1.4vw; box-shadow:.7vw .7vw 0 #1b130d; padding:2.5vw 5vw; text-align:center; animation:pop .5s ease-out; }
+  .nextCard .k{ font-size:max(16px,1.6vw); letter-spacing:.2em; text-transform:uppercase; }
+  .nextCard .n{ font-family:Ultra, Georgia, serif; font-size:max(44px,6vw); color:#c8352b; -webkit-text-stroke:max(2px,.15vw) #1b130d; line-height:1.05; margin:1vw 0; }
+  .nextCard .c{ font-family:Ultra, Georgia, serif; font-size:max(60px,8vw); line-height:1; }
+  @keyframes hit{ 0%{ transform:scale(1.8); } 60%{ transform:scale(.95); } 100%{ transform:scale(1); } }
+
+  /* ===== LOW-POLY THEME (dusk palette, faceted backgrounds, flat cards, Josefin Sans) ===== */
+  :root{ --lp-ink:#3b3560; --lp-cream:#fff8ef; --lp-gold:#f7b267; --lp-rose:#ee8a7a; --lp-teal:#4fa3a5; --lp-plum:#55558f; }
+  .lpbg{ background-color:#b9a2d6 !important; background-size:cover !important; background-position:center !important; }
+
+  #v-games, .toon{ color:var(--lp-cream); }
+  #v-games h2, #v-games b, #v-games .gameCards b, .toon h2{ font-family:'Josefin Sans', sans-serif; font-weight:300; letter-spacing:.14em; text-transform:uppercase; }
+  #v-games .hint, .toon .hint{ color:rgba(255,246,236,.75); }
+  #v-games .panel, .toon .panel{ background:rgba(255,246,236,.94); color:var(--lp-ink); border:0; border-radius:4px; box-shadow:0 12px 34px rgba(59,53,96,.35); }
+  #v-games .panel .hint, .toon .panel .hint{ color:#6b6680; }
+  #v-games .gameCards .panel.sel{ background:var(--lp-rose); color:#fff; } #v-games .gameCards .panel.sel .hint{ color:#fff; }
+  #v-games .gameCards .panel:hover{ transform:translateY(-3px); }
+  #v-games button, .toon button{ border:0; box-shadow:none; background:rgba(255,246,236,.92); color:var(--lp-ink); border-radius:3px; font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.12em; }
+  #v-games button:active, .toon button:active{ transform:translateY(1px); box-shadow:none; }
+  #v-games button.solid, .toon button.solid{ background:var(--lp-ink); color:var(--lp-cream); }
+  #v-games button.mg, .toon button.mg{ background:var(--lp-gold); color:var(--lp-ink); font-family:'Josefin Sans', sans-serif; font-size:14px; }
+  #v-games input, #v-games select, .toon select, .toon input{ border:0; border-radius:3px; background:#fff; box-shadow:inset 0 0 0 1px rgba(59,53,96,.2); }
+  #v-games .teamBox{ border:0; background:rgba(255,246,236,.94); color:var(--lp-ink); box-shadow:0 8px 24px rgba(59,53,96,.3); border-radius:4px; }
+  #v-games .teamBox li.act{ color:var(--lp-rose); }
+  #gfxBox{ border:0; border-radius:6px; box-shadow:0 18px 50px rgba(59,53,96,.45); }
+  .star{ background:rgba(255,246,236,.95); color:var(--lp-ink); border:0; border-radius:4px; box-shadow:0 14px 40px rgba(59,53,96,.35); transform:none !important; }
+  .star .who{ font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.04em; }
+  .star .cap{ border:0; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); border-radius:0; }
+  .star .big{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-rose); -webkit-text-stroke:0; letter-spacing:.02em; }
+  .star .sub{ color:#6b6680; } .star ul{ border-top:1px solid rgba(59,53,96,.15); }
+  .xpbar{ border:0; background:rgba(59,53,96,.12); border-radius:0; } .xpbar i{ background:var(--lp-gold); }
+  .liveStrip .pill{ border:0; box-shadow:0 8px 20px rgba(59,53,96,.3); border-radius:3px; font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.06em; }
+  #spRays{ display:none; } #spShow::after{ background:radial-gradient(circle, transparent 50%, rgba(59,53,96,.4)); }
+  #spCard{ background:rgba(255,246,236,.95); border:0; border-radius:4px; box-shadow:0 30px 80px rgba(59,53,96,.5); animation:pop .6s ease-out; color:var(--lp-ink); }
+  #spCard .who{ font-family:'Josefin Sans', sans-serif; font-weight:300; letter-spacing:.08em; text-transform:uppercase; }
+  #spCard .cap, .pt .ring{ border:0; }
+  #spCard .big{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-rose); -webkit-text-stroke:0; }
+  #spCard .sub{ color:#6b6680; } #spBar{ background:var(--lp-gold); height:6px; } #spClose{ border:0; box-shadow:none; border-radius:3px; background:rgba(255,246,236,.9); }
+  #wkBar{ background:rgba(59,53,96,.92); backdrop-filter:blur(6px); }
+  #wkBar button{ border:0; border-radius:3px; box-shadow:none; }
+  .stepRow{ border-bottom:1px solid rgba(59,53,96,.12); } .stepRow .n{ font-family:'Josefin Sans', sans-serif; font-weight:700; }
+  .stPlan{ color:rgba(255,246,236,.8); font-family:'Josefin Sans', sans-serif; letter-spacing:.3em; }
+  .stName{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); -webkit-text-stroke:0; letter-spacing:.01em; text-shadow:0 .4vw 2vw rgba(59,53,96,.35); }
+  .stTarget{ color:var(--lp-cream); font-family:'Josefin Sans', sans-serif; font-weight:400; letter-spacing:.04em; }
+  .stTarget .fc{ background:var(--lp-gold); color:var(--lp-ink); border-radius:2px; font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:.3vw 1vw .1vw; }
+  .stClock{ font-family:'Josefin Sans', sans-serif; font-weight:300; color:var(--lp-cream); -webkit-text-stroke:0; text-shadow:none; letter-spacing:.02em; }
+  .stStrip div{ border:0; border-radius:0; background:rgba(255,246,236,.25); clip-path:polygon(0 0,100% 0,calc(100% - .5vw) 100%,0 100%); }
+  .stStrip div.easy{ background:rgba(255,246,236,.12); } .stStrip div.done{ background:var(--lp-teal); } .stStrip div i{ background:var(--lp-gold); }
+  .pt{ background:rgba(255,246,236,.95); color:var(--lp-ink); border:0; border-radius:4px; box-shadow:0 1vw 2.4vw rgba(59,53,96,.35); }
+  .pt .nm{ font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.04em; }
+  .pt .gr{ font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.12em; -webkit-text-stroke:0; }
+  .pt .mult{ border:0; background:var(--lp-gold); clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); border-radius:0; font-family:'Josefin Sans', sans-serif; font-weight:700; }
+  .ticker span{ background:rgba(59,53,96,.85); border-radius:2px; font-family:'Josefin Sans', sans-serif; letter-spacing:.06em; }
+  .lobby .qrBox{ background:rgba(255,246,236,.95); color:var(--lp-ink); border:0; border-radius:4px; box-shadow:0 1.4vw 4vw rgba(59,53,96,.4); }
+  .lobby .qrBox .stPlan{ color:#6b6680; }
+  .lobby .code{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-rose); -webkit-text-stroke:0; }
+  .nextCard{ background:#9a8cc9; } .nextCard::before{ display:none; }
+  .nextCard > div{ background:transparent; border:0; box-shadow:none; color:var(--lp-cream); }
+  .nextCard .k{ font-family:'Josefin Sans', sans-serif; letter-spacing:.4em; opacity:.85; }
+  .nextCard .n{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); -webkit-text-stroke:0; }
+  .nextCard .c{ font-family:'Josefin Sans', sans-serif; font-weight:300; color:var(--lp-gold); }
+  @keyframes pop{ from{ transform:translateY(16px); opacity:0; } to{ transform:none; opacity:1; } }
+
+  .pt .gr{ font-size:max(15px,1.35vw) !important; }
+  #tunnel{ display:block; width:calc(100% - 4vw); margin:1.6vw 2vw 0; border-radius:4px; box-shadow:0 1.4vw 4vw rgba(59,53,96,.4); }
+  .pt .imp{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-teal); font-size:max(14px,1.2vw); }
+
+  /* ===== whole coach screen in the low-poly pastel look ===== */
+  html, body{ background:#b9a2d6; font-family:'Josefin Sans', sans-serif; color:var(--lp-ink); }
+  body.lpbg{ background-attachment:fixed !important; }
+  button{ border:0; border-radius:3px; background:rgba(255,248,239,.92); color:var(--lp-ink); font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.12em; box-shadow:0 4px 12px rgba(59,53,96,.15); }
+  button.solid{ background:var(--lp-ink); color:var(--lp-cream); } button.mg{ background:var(--lp-gold); color:var(--lp-ink); border:0; }
+  input, select, textarea{ border:0; border-radius:3px; background:#fff; box-shadow:inset 0 0 0 1px rgba(59,53,96,.18); font-family:'Josefin Sans', sans-serif; color:var(--lp-ink); }
+  input[type=checkbox]{ accent-color:var(--lp-rose); box-shadow:none; }
+  h2{ font-family:'Josefin Sans', sans-serif; font-weight:400; letter-spacing:.16em; }
+  .hint{ color:rgba(59,53,96,.7); } .lbl{ color:rgba(59,53,96,.65); letter-spacing:.14em; }
+  .panel{ background:rgba(255,248,239,.94); border:0; border-radius:4px; box-shadow:0 12px 34px rgba(59,53,96,.22); }
+  #login{ margin:6vh auto; } #login .brand{ font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.35em; color:var(--lp-cream); font-size:28px; }
+  #login > .hint{ color:rgba(255,248,239,.9); } #login label{ margin-top:14px; }
+  #app{ background:transparent; }
+  #top{ background:rgba(59,53,96,.82); backdrop-filter:blur(8px); border-bottom:0; color:var(--lp-cream); }
+  #top .brand{ font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.35em; } #top .team, #top .hint{ color:rgba(255,248,239,.75); }
+  #tabs button{ background:transparent; color:var(--lp-cream); box-shadow:none; border:0; }
+  #tabs button.active{ background:var(--lp-gold); color:var(--lp-ink); border:0; }
+  #tabs #bOut{ background:rgba(255,248,239,.15); }
+  #side{ background:rgba(255,248,239,.9); margin:16px 0 16px 16px; border-radius:4px; box-shadow:0 12px 34px rgba(59,53,96,.22); max-height:calc(100vh - 96px); }
+  #side .ath{ border-bottom:1px solid rgba(59,53,96,.08); } #side .sw{ border-radius:0; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); }
+  #side .dot{ border:0; background:rgba(59,53,96,.18); border-radius:0; transform:rotate(45deg); } #side .dot.on{ background:var(--lp-teal); }
+  #main{ border-left:0 !important; }
+  .tile{ background:rgba(255,248,239,.95); border:0; border-radius:4px; box-shadow:0 10px 28px rgba(59,53,96,.2); }
+  .tile.off{ opacity:.55; }
+  .tile .nm{ font-family:'Josefin Sans', sans-serif; font-weight:700; } .tile .nm .sw{ border-radius:0; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); }
+  .tile .v{ font-family:'Josefin Sans', sans-serif; font-weight:700; } .tile .l{ color:rgba(59,53,96,.6); letter-spacing:.12em; }
+  .tile .zone{ border-radius:2px; } .tile .tech b{ color:var(--lp-rose); }
+  .toggles label{ border:0; background:rgba(59,53,96,.08); border-radius:3px; font-family:'Josefin Sans', sans-serif; font-weight:600; letter-spacing:.1em; }
+  .toggles label.on{ background:var(--lp-ink); color:var(--lp-cream); }
+  .chart{ border:0; border-radius:4px; background:#fffaf4; }
+  table.t th{ border-bottom:2px solid rgba(59,53,96,.2); color:rgba(59,53,96,.6); } table.t td{ border-bottom:1px solid rgba(59,53,96,.08); }
+  .zbar{ border:0; border-radius:2px; }
+  .rosterRow{ border-bottom:1px solid rgba(59,53,96,.08); } #qr img{ border:0; box-shadow:0 8px 20px rgba(59,53,96,.2); border-radius:4px; }
+  #toast{ background:var(--lp-ink); border-radius:3px; font-family:'Josefin Sans', sans-serif; }
+  .lane .track{ border:0; background:rgba(59,53,96,.08); } .lane .nm{ font-family:'Josefin Sans', sans-serif; }
+
+  html{ min-height:100%; } body{ min-height:100vh; }
+  /* big QR in the lobby: readable from across the erg room */
+  .lobby{ grid-template-columns:minmax(360px, 42vw) 1fr; align-items:start; }
+  .lobby .qrBox{ padding:2vw 2vw 1.4vw; }
+  .lobby .qrBox .qr{ display:block; width:min(100%, 66vh); height:auto; margin:1.2vw auto; }
+  .lobby .code{ font-size:max(44px,4.4vw); }
+  #qr .qr{ width:240px; height:240px; display:block; border-radius:4px; box-shadow:0 8px 20px rgba(59,53,96,.2); }
+
+  /* risk flags and live numbers on rower cards */
+  .risk{ font-family:'Josefin Sans', sans-serif; font-size:12px; border-radius:2px; padding:4px 8px; margin:-4px -4px 8px; color:#fff; }
+  .risk.lv1{ background:#e8a33a; } .risk.lv2{ background:#d9483b; animation:pulse 1.2s ease-in-out infinite; }
+  .risk span{ opacity:.9; font-weight:400; }
+  .tile.rk2{ box-shadow:0 0 0 3px #d9483b, 0 10px 28px rgba(59,53,96,.2); } .tile.rk1{ box-shadow:0 0 0 3px #e8a33a, 0 10px 28px rgba(59,53,96,.2); }
+  #side .rdot{ width:9px; height:9px; transform:rotate(45deg); margin-right:4px; }
+  .pt .pst{ display:grid; grid-template-columns:repeat(3,1fr); gap:.3vw; margin-top:.5vw; border-top:1px solid rgba(59,53,96,.1); padding-top:.5vw; }
+  .pt .pst b{ display:block; font-family:'Josefin Sans', sans-serif; font-weight:700; font-size:max(15px,1.35vw); line-height:1.1; }
+  .pt .pst i{ font-style:normal; font-size:max(10px,.7vw); letter-spacing:.1em; color:rgba(59,53,96,.6); text-transform:uppercase; }
+  .pt svg:not(.av):not(.ring):not(.bdg){ width:100%; height:auto; margin-top:.3vw; }
+  .pt .av{ width:max(60px,5vw) !important; }
+  .pt .risk{ margin:.5vw -.4vw -.4vw; font-size:max(11px,.85vw); }
+  #wkBar .alert{ background:#d9483b; color:#fff; border-radius:2px; padding:3px 8px; margin-left:8px; font-family:'Josefin Sans', sans-serif; }
+  @keyframes pulse{ 50%{ opacity:.7; } }
+</style>
+</head>
+<body>
+<div id="login" class="hidden">
+  <div class="brand">ERGCOACH</div><div class="hint">Coach screen · run it on the laptop or projector in the erg room</div>
+  <div class="panel" style="margin-top:20px">
+    <h2>Log in to your team</h2>
+    <label class="lbl">Team code</label><input id="lCode" autocapitalize="characters" style="text-transform:uppercase">
+    <div class="row" style="margin-top:14px"><button class="solid" id="lGo">Log in</button><span class="hint" id="lMsg"></span></div>
+  </div>
+  <div class="panel">
+    <h2>New team</h2>
+    <label class="lbl">Team name</label><input id="nName" placeholder="Uppsala RK">
+    <label class="lbl">Team code<span style="text-transform:none"> · athletes type this, 4–8 letters</span></label><input id="nCode" placeholder="UPP24" style="text-transform:uppercase">
+    <div class="row" style="margin-top:14px"><button id="nGo">Create team</button><span class="hint" id="nMsg"></span></div>
+  </div>
+  <p class="hint" id="srvNote"></p>
+</div>
+
+<div id="app" class="hidden">
+  <div id="top"><span class="brand">ERGCOACH</span><span class="team" id="tName"></span><span class="hint" id="tOnline"></span>
+    <div id="tabs"><button data-v="wk">Workout</button><button data-v="live" class="active">Live</button><button data-v="spot">Spotlight</button><button data-v="games">Games</button><button data-v="ana">Analytics</button><button data-v="roster">Roster</button></div></div>
+  <aside id="side">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">Athletes</h2><span><button id="sAll" style="min-height:30px;padding:4px 8px">All</button> <button id="sOn" style="min-height:30px;padding:4px 8px">Online</button></span></div>
+    <div id="athList" style="margin-top:10px"></div>
+    <div style="margin-top:16px" class="hint">Tick who to show in Live, who races in Games and who is compared in Analytics.</div>
+    <div style="margin-top:16px"><button id="bSim" style="width:100%">Simulate rowers</button></div>
+  </aside>
+  <main id="main">
+    <section id="v-live">
+      <div class="panel">
+        <div class="row" style="justify-content:space-between"><h2 style="margin:0">Show</h2>
+          <div class="row"><span class="lbl">Sort</span><select id="sort"><option value="name">Name</option><option value="watt">Watts</option><option value="dist">Distance</option><option value="rate">Rate</option><option value="hrr">% HR reserve</option><option value="tech">Technique</option></select></div></div>
+        <div class="toggles" id="fields" style="margin-top:10px"></div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+      <div class="grid2" style="margin-top:16px">
+        <div class="panel"><h2>Force curves side by side</h2><div id="cmp"></div><div class="legend" id="cmpLeg"></div><p class="hint">Average of each rower's last 5 strokes, all scaled to the same peak so the shape is what you compare. Dashed: a good reference shape.</p></div>
+        <div class="panel"><h2>Message to rowers</h2>
+          <div class="row"><input id="msg" placeholder="Rate 20, long and easy" style="flex:1"><button class="solid" id="msgGo">Send</button></div>
+          <div class="row" style="margin-top:10px"><button id="msgCount">Countdown 5 · GO</button><button id="msgStop">Easy · stop</button><span class="hint" id="msgTo"></span></div>
+          <p class="hint">Shown as a big banner on the phones of the ticked rowers.</p></div>
+      </div>
+    </section>
+
+    <section id="v-wk" class="hidden toon">
+      <div id="wkSetup">
+        <div class="row" style="justify-content:space-between;margin-bottom:14px"><div><h2 style="margin:0;font-size:26px">Workout</h2><div class="hint">Pick a plan, open the lobby, rowers scan the QR code and join with their avatar. You move the steps on, or let them run automatically.</div></div></div>
+        <div class="gameCards" id="wkPlans"></div>
+        <div class="panel" style="margin-top:16px"><div class="row" style="justify-content:space-between"><h2 style="margin:0" id="wkPlanName"></h2>
+          <div class="row"><select id="wkMode"><option value="progress">Progress mode · personal development</option><option value="compete">Competition mode · top performance</option></select><label class="lbl"><input type="checkbox" id="wkAuto" checked> move on automatically</label><button id="wkSave">Save as my plan</button><button class="mg" id="wkOpen">Open lobby</button></div></div>
+          <div id="wkSteps" style="margin-top:12px"></div><button id="wkAdd" style="margin-top:10px">+ Step</button></div>
+      </div>
+      <div id="wkStage" class="hidden"></div>
+      <div id="wkBar" class="hidden"><button id="wkStart" class="mg">Start</button><button id="wkPrev">◀ Step</button><button id="wkNext" class="solid">Next step ▶</button><label class="lbl"><input type="checkbox" id="wkAuto2"> auto</label><button id="wkTv">TV mode</button><button id="wkEnd">End workout</button><span class="hint" id="wkInfo"></span></div>
+    </section>
+
+    <section id="v-spot" class="hidden toon">
+      <div class="row" style="justify-content:space-between;margin-bottom:14px"><div><h2 style="margin:0;font-size:26px">Spotlight</h2><div class="hint">Only rowers who beat their own normal or set a personal best end up here. Everyone competes against themselves.</div></div>
+        <div class="row"><select id="spWin"><option value="0">Today</option><option value="7" selected>This week</option><option value="28">4 weeks</option></select><button class="mg" id="spBig">Big screen</button></div></div>
+      <div id="spLive"></div>
+      <div class="spGrid" id="spCards"></div>
+      <div class="panel" id="spLadder"></div>
+    </section>
+    <div id="spShow" class="hidden"><div id="spRays"></div><div id="spCard"></div><div id="spBar"></div><button id="spClose">Close</button></div>
+
+    <section id="v-games" class="hidden">
+      <div class="gameCards" id="gameCards"></div>
+      <div class="panel" id="gameSet" style="margin-top:16px"></div>
+      <div class="panel" id="gameRun"></div>
+    </section>
+
+    <section id="v-ana" class="hidden">
+      <div class="panel"><div class="row"><span class="lbl">Period</span><select id="aPer"><option value="28">4 weeks</option><option value="91" selected>3 months</option><option value="365">12 months</option><option value="0">All</option></select>
+        <span class="lbl" style="margin-left:12px">Show</span><select id="aMet"><option value="avg_power">Average watts</option><option value="p2k">Predicted 2 km</option><option value="score">Technique score</option><option value="peakPos">Peak position</option><option value="avg_hr">Average heart rate</option><option value="avg_rate">Stroke rate</option></select>
+        <label class="lbl" style="margin-left:12px"><input type="checkbox" id="aErg" checked> erg only</label>
+        <button id="aCsv" style="margin-left:auto">Export CSV</button></div></div>
+      <div class="panel"><h2 id="aTrendT">Trend</h2><div id="aTrend"></div><div class="legend" id="aTrendLeg"></div></div>
+      <div class="grid2">
+        <div class="panel"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Force curve over time</h2><select id="aWho"></select></div><div id="aCurve" style="margin-top:10px"></div><div id="aCurveTxt" class="hint"></div></div>
+        <div class="panel"><h2>Time per heart-rate zone (Karvonen)</h2><div id="aZones"></div></div>
+      </div>
+      <div class="panel" style="overflow:auto"><h2>Team table</h2><div id="aTable"></div></div>
+    </section>
+
+    <section id="v-roster" class="hidden">
+      <div class="grid2">
+        <div class="panel"><h2>Rowers</h2>
+          <div class="rosterRow lbl"><div>Name</div><div>Max HR</div><div>Rest HR</div><div>Born</div><div></div></div>
+          <div id="roster"></div>
+          <div class="rosterRow"><input id="rName" placeholder="New rower"><input id="rMax" type="number" placeholder="bpm"><input id="rRest" type="number" placeholder="bpm"><input id="rBy" type="number" placeholder="year"><button class="solid" id="rAdd">Add</button></div>
+          <p class="hint">Rowers scan the QR code and tap their name. Max and resting heart rate feed the Karvonen zones; rowers can also set them on the phone.</p></div>
+        <div class="panel"><h2>Invite</h2><div class="row" style="align-items:flex-start"><div id="qr"></div><div style="flex:1;min-width:200px"><p class="hint">Rowers scan this and tap their name. Then they tap <b>Connect PM5</b> on the erg they sit on.</p><p style="word-break:break-all;font-size:13px" id="invUrl"></p><button id="invCopy">Copy link</button></div></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="toast"></div>

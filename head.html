@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ErgCoach">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ffffff">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<title>Erg Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ultra&family=Josefin+Sans:wght@300;400;600;700&family=Chivo+Mono:wght@300;400;700;900&display=swap" rel="stylesheet">
+<style>
+%%BASECSS%%
+  /* ---------- ErgCoach ---------- */
+  button{ min-height:48px; font-size:13px; padding:14px 12px; }
+  .seg button{ min-height:46px; font-size:12px; padding:10px 6px; }
+  .btnRow{ gap:10px; }
+  .field{ padding:10px 0; font-size:14px; min-height:52px; }
+  input[type=number], input[type=text], select{ font-size:16px; min-height:46px; padding:8px 10px; border-radius:8px; }
+  input[type=number]{ width:96px; }
+  input[type=range]{ width:100%; accent-color:#2e2e2e; }
+  main{ padding:0 16px calc(104px + env(safe-area-inset-bottom)); }
+  #brandBtn{ min-height:0; }
+
+  #tabs{ position:fixed; left:0; right:0; bottom:0; z-index:20; background:var(--paper); border-top:2px solid var(--line);
+    display:flex; padding:8px 6px calc(10px + env(safe-area-inset-bottom)); }
+  #tabs button{ flex:1; border:0; background:transparent; min-height:56px; padding:4px 0; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; font-weight:300; letter-spacing:1px; }
+  #tabs button svg{ width:24px; height:24px; }
+  #tabs button.active{ font-weight:900; }
+  #tabs button.active svg{ background:var(--soft); border-radius:8px; outline:3px solid var(--soft); }
+
+  .big3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; text-align:center; }
+  .big3 > div{ padding:6px 0; border-right:1px solid #ddd; }
+  .big3 > div:last-child{ border-right:0; }
+  .big3 .v{ font-weight:900; font-size:clamp(28px, 9vw, 40px); line-height:1.05; font-variant-numeric:tabular-nums; }
+  .big3 .l{ font-size:11px; letter-spacing:1.5px; text-transform:uppercase; font-weight:300; color:var(--ink-mid); margin-top:4px; }
+  .paceBig{ text-align:center; font-weight:900; font-size:clamp(64px, 22vw, 96px); line-height:1; font-variant-numeric:tabular-nums; margin:6px 0 2px; }
+  .paceLbl{ text-align:center; font-size:12px; letter-spacing:2.5px; text-transform:uppercase; font-weight:300; }
+  .chart{ display:block; width:100%; height:auto; border:2px solid var(--line); border-radius:12px; background:#fff; }
+  .legend{ display:flex; flex-wrap:wrap; gap:12px; font-size:11px; color:var(--ink-mid); margin-top:8px; }
+  .legend i{ display:inline-block; width:18px; height:3px; vertical-align:middle; margin-right:5px; background:#2e2e2e; }
+  .chips{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .chip{ border:2px solid var(--line); border-radius:10px; padding:8px 10px; }
+  .chip .cv{ font-size:20px; font-weight:900; font-variant-numeric:tabular-nums; }
+  .chip .cl{ font-size:11px; color:var(--ink-mid); margin-top:2px; }
+  .chip.warn{ border-color:#FD08FF; }
+  .score{ display:flex; align-items:center; gap:14px; }
+  .score .sv{ font-size:56px; font-weight:900; line-height:1; }
+  .score .st{ font-size:12px; color:var(--ink-mid); line-height:1.5; }
+  .find{ border-top:2px solid var(--line); padding:12px 0 4px; }
+  .find:first-of-type{ border-top:0; }
+  .find h3{ margin:0 0 4px; font-size:15px; font-weight:900; }
+  .find .sev{ display:inline-block; font-size:10px; letter-spacing:1px; text-transform:uppercase; border:1.5px solid var(--ink); border-radius:5px; padding:1px 5px; margin-left:6px; vertical-align:2px; font-weight:700; }
+  .find .sev.hi{ border-color:#FD08FF; color:#FD08FF; }
+  .find p{ font-size:13px; line-height:1.55; margin:4px 0; color:var(--ink); font-weight:300; }
+  .find .drill{ font-size:12px; border-left:3px solid #FD08FF; padding:4px 10px; margin:8px 0 6px; line-height:1.5; }
+  .note{ border:2px solid #FD08FF; border-radius:10px; padding:10px 12px; font-size:12px; line-height:1.55; margin:10px 0; }
+  .note b{ font-weight:900; }
+  .status{ font-size:12px; color:var(--ink-mid); margin-top:8px; min-height:18px; }
+
+  /* video */
+  .vwrap{ position:relative; width:100%; border:2px solid var(--line); border-radius:12px; overflow:hidden; background:#111; }
+  .vwrap video{ display:block; width:100%; height:auto; }
+  .vwrap canvas{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .vwrap .empty{ color:#bbb; font-size:12px; padding:60px 20px; text-align:center; line-height:1.6; }
+  .vbar{ display:flex; gap:6px; margin-top:8px; }
+  .vbar button{ flex:1; min-height:46px; padding:8px 4px; font-size:12px; }
+  .vbar button.active{ background:var(--ink); color:#fff; }
+  .prog{ height:8px; border:2px solid var(--line); border-radius:5px; margin-top:8px; overflow:hidden; }
+  .prog i{ display:block; height:100%; width:0; background:var(--ink); }
+  .scrub{ margin-top:10px; }
+  .vt{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-mid); margin-top:2px; }
+  .recDot{ display:inline-block; width:10px; height:10px; border-radius:50%; background:#d0312d; margin-right:6px; animation:blink 1s infinite; }
+  @keyframes blink{ 50%{ opacity:.2; } }
+  .sess{ border:2px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px; }
+  .sess .sT{ font-size:14px; font-weight:900; }
+  .sess .sM{ font-size:11px; color:var(--ink-mid); margin-top:3px; line-height:1.4; }
+  #toast{ position:fixed; left:50%; bottom:calc(96px + env(safe-area-inset-bottom)); transform:translateX(-50%); z-index:30;
+    background:var(--ink); color:var(--paper); border-radius:8px; padding:10px 16px; font-size:11px; font-weight:700; letter-spacing:1px;
+    text-transform:uppercase; opacity:0; transition:opacity .2s; pointer-events:none; white-space:nowrap; }
+  #toast.show{ opacity:1; }
+  .selfRow{ display:flex; align-items:center; gap:12px; border-top:1px solid #ddd; margin-top:10px; padding-top:10px; }
+  .selfRow .sv{ font-size:34px; font-weight:900; min-width:90px; }
+  .selfRow .sl{ font-size:12px; color:#757575; } .selfRow small{ font-size:11px; }
+  .xpc{ background:#f8eed5; border:3px solid #1b130d; border-radius:16px 12px 18px 10px; box-shadow:4px 4px 0 #1b130d; padding:14px; margin:6px 0 16px; color:#1b130d; }
+  .xpc .pTop{ display:flex; justify-content:space-between; }
+  .xpc .pLv{ font-family:Ultra, Georgia, serif; font-size:26px; color:#c8352b; -webkit-text-stroke:1px #1b130d; }
+  .xpc .pRank{ font-size:12px; text-transform:uppercase; letter-spacing:1px; }
+  .xpc .pBar{ height:14px; border:2px solid #1b130d; border-radius:8px; background:#fffaf0; overflow:hidden; margin:10px 0 4px; }
+  .xpc .pBar i{ display:block; height:100%; background:#e0a526; }
+  .xpc .pbs{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-top:6px; }
+  .xpc .pbs div{ border:2px solid #1b130d; border-radius:8px; padding:6px 8px; background:#fffaf0; }
+  .xpc .pbs b{ font-size:16px; display:block; } .xpc .pbs small{ font-size:10px; color:#6b5a45; }
+  .xpc .badges{ display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .xpc .badges span{ font-size:11px; border:2px dashed #b9a98c; color:#b9a98c; border-radius:20px; padding:4px 9px; }
+  .xpc .badges span.on{ border:2px solid #1b130d; background:#e0a526; color:#1b130d; font-weight:700; box-shadow:2px 2px 0 #1b130d; }
+  /* coached workout overlay: lobby + landscape game */
+  #sess{ position:fixed; inset:0; z-index:70; background:#efe1bd; color:#1b130d; overflow:auto; font-family:'Chivo Mono',monospace; }
+  #sessX{ position:fixed; right:8px; top:8px; z-index:3; min-height:34px; padding:4px 10px; border:3px solid #1b130d; background:#f8eed5; border-radius:10px; box-shadow:2px 2px 0 #1b130d; }
+  #sessIn{ height:100%; }
+  #wkCv{ display:block; width:100vw; height:100vh; height:100dvh; }
+  #sess .turn{ display:none; }
+  @media (orientation:portrait){ #sess .turn{ display:flex; position:absolute; inset:0; align-items:center; justify-content:center; background:rgba(239,225,189,.96); font-family:Ultra, Georgia, serif; font-size:24px; text-align:center; padding:30px; } }
+  .lob{ display:grid; grid-template-columns:minmax(200px,38%) 1fr; gap:16px; padding:16px 16px 20px; min-height:100%; align-items:start; }
+  @media (orientation:portrait){ .lob{ grid-template-columns:1fr; } }
+  .lobL{ background:#f8eed5; border:3px solid #1b130d; border-radius:18px 14px 20px 12px; box-shadow:4px 4px 0 #1b130d; padding:14px; text-align:center; }
+  .lobName{ font-family:Ultra, Georgia, serif; font-size:24px; margin:4px 0 10px; }
+  .lobT{ font-family:Ultra, Georgia, serif; font-size:24px; color:#c8352b; -webkit-text-stroke:1px #1b130d; }
+  .lobS{ font-size:12px; color:#6b5a45; margin-bottom:6px; }
+  .lobPm{ margin-top:10px; font-size:12px; } .lobPm button{ min-height:36px; padding:4px 10px; }
+  #sess button{ border:3px solid #1b130d; box-shadow:2px 2px 0 #1b130d; background:#f8eed5; color:#1b130d; border-radius:12px; }
+  #sess button.big{ width:100%; min-height:56px; font-family:Ultra, Georgia, serif; font-size:20px; text-transform:none; }
+  #sess button.go{ background:#e0a526; animation:bob .6s ease-in-out infinite alternate; }
+  .lbl2{ font-size:10px; letter-spacing:1.5px; text-transform:uppercase; margin:12px 0 5px; }
+  .pk{ display:flex; flex-wrap:wrap; gap:6px; }
+  #sess .pk button{ min-height:36px; min-width:36px; padding:3px 8px; font-size:11px; box-shadow:none; border-width:2px; }
+  #sess .pk button.on{ background:#1b130d; color:#f8eed5; box-shadow:2px 2px 0 #e0a526; }
+  .pk i{ display:block; width:22px; height:22px; border-radius:50%; border:2px solid #1b130d; }
+  .crew{ display:flex; flex-wrap:wrap; gap:8px; } .crew span{ display:flex; flex-direction:column; align-items:center; font-size:10px; }
+  .hits{ display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-top:10px; } .hits span{ color:#fff; border:2px solid #1b130d; border-radius:20px; padding:2px 8px; font-size:10px; font-weight:700; }
+  #sess .sty{ font-size:13px; line-height:1.5; }
+  .hrRow{ display:flex; align-items:center; gap:12px; border-top:1px solid #ddd; margin-top:10px; padding-top:10px; }
+  .hrV{ font-size:34px; font-weight:900; font-variant-numeric:tabular-nums; }
+  .hrV small{ font-size:11px; font-weight:300; margin-left:4px; color:var(--ink-mid); }
+  .hrZ{ flex:1; border-radius:10px; padding:10px 12px; font-size:13px; font-weight:900; background:var(--soft); }
+  .liveTeam{ font-size:11px; color:var(--ink-mid); margin-top:8px; text-align:center; }
+  .zt{ width:100%; margin-top:10px; }
+  .zt td:first-child{ font-weight:900; }
+  .zt .sw{ display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:0; }
+  .pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px; }
+  .pad button{ font-size:24px; font-weight:900; min-height:62px; }
+  .pinDots{ display:flex; justify-content:center; gap:16px; margin:14px 0 4px; }
+  .pinDots i{ width:18px; height:18px; border-radius:50%; border:2px solid var(--ink); }
+  .pinDots i.on{ background:var(--ink); }
+  .names{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px; }
+  .names button{ text-transform:none; letter-spacing:0; font-size:15px; }
+  #banner{ position:fixed; inset:0; z-index:80; background:rgba(46,46,46,0.94); color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; padding:30px; text-align:center; }
+  #banner #bannerTxt{ font-size:clamp(40px, 14vw, 72px); font-weight:900; line-height:1.05; }
+  #banner #bannerTxt small{ display:block; font-size:16px; font-weight:300; margin-top:12px; letter-spacing:1px; }
+  #banner button{ background:#fff; min-width:140px; }
+  /* cartoon title card for countdowns and messages from the coach */
+  #banner{ background:#c8352b; overflow:hidden; }
+  #banner::before{ content:''; position:absolute; inset:-60%; background:repeating-conic-gradient(from 0deg, #c8352b 0 7.5deg, #e0a526 7.5deg 15deg); animation:spin 24s linear infinite; }
+  #banner::after{ content:''; position:absolute; inset:0; background:radial-gradient(circle, transparent 40%, rgba(40,25,10,.55)); pointer-events:none; }
+  #banner #bannerTxt{ position:relative; z-index:1; font-family:Ultra, Georgia, serif; font-weight:400; color:#c8352b; background:#f8eed5; border:5px solid #1b130d; border-radius:22px 16px 24px 14px; box-shadow:6px 6px 0 #1b130d; padding:22px 28px; -webkit-text-stroke:2px #1b130d; animation:bob .5s ease-in-out infinite alternate; }
+  #banner #bannerTxt small{ -webkit-text-stroke:0; color:#1b130d; font-family:'Chivo Mono',monospace; font-weight:700; }
+  #banner button{ position:relative; z-index:1; border:3px solid #1b130d; box-shadow:3px 3px 0 #1b130d; background:#f8eed5; color:#1b130d; }
+  @keyframes bob{ from{ transform:translateY(-3px) rotate(-1deg); } to{ transform:translateY(3px) rotate(1deg); } }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .bars{ display:flex; align-items:flex-end; gap:6px; height:120px; border-bottom:2px solid var(--line); margin-top:10px; }
+  .bars > div{ flex:1; display:flex; flex-direction:column-reverse; }
+  .bars span{ display:block; }
+  .barsL{ display:flex; gap:6px; font-size:10px; color:var(--ink-mid); margin-top:4px; }
+  .barsL > div{ flex:1; text-align:center; }
+  .sess .btnRow button{ min-height:44px; padding:10px 8px; font-size:12px; }
+
+  /* ===== LOW-POLY THEME (dusk palette, faceted backgrounds, flat cards, Josefin Sans) ===== */
+  :root{ --lp-ink:#3b3560; --lp-cream:#fff8ef; --lp-gold:#f7b267; --lp-rose:#ee8a7a; --lp-teal:#4fa3a5; --lp-plum:#55558f; }
+  .lpbg{ background-color:#b9a2d6 !important; background-size:cover !important; background-position:center !important; }
+
+  #sess{ color:var(--lp-cream); font-family:'Josefin Sans', sans-serif; }
+  #sessX, #sess button{ border:0 !important; box-shadow:none !important; border-radius:3px !important; background:rgba(255,246,236,.92); color:var(--lp-ink); font-family:'Josefin Sans', sans-serif; font-weight:700; letter-spacing:.08em; }
+  #sess button.big{ font-family:'Josefin Sans', sans-serif; letter-spacing:.14em; text-transform:uppercase; }
+  #sess button.go{ background:var(--lp-gold); animation:none; }
+  #sess .pk button.on{ background:var(--lp-ink); color:var(--lp-cream); box-shadow:inset 0 -3px 0 var(--lp-gold) !important; }
+  .pk i{ border:0; clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); border-radius:0; }
+  .lobL{ background:rgba(255,246,236,.95); color:var(--lp-ink); border:0; border-radius:4px; box-shadow:0 12px 34px rgba(59,53,96,.35); }
+  .lobName{ font-family:'Josefin Sans', sans-serif; font-weight:700; }
+  .lobT{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); -webkit-text-stroke:0; letter-spacing:.04em; }
+  .lobS{ color:rgba(255,246,236,.8); } .lobL .lobS{ color:#6b6680; } .lbl2{ color:rgba(255,246,236,.75); letter-spacing:.25em; }
+  .hits span{ border:0; border-radius:2px; }
+  #sess .turn{ background:rgba(59,53,96,.96) !important; font-family:'Josefin Sans', sans-serif !important; }
+  #banner{ background:#9a8cc9; } #banner::before{ display:none; } #banner::after{ background:radial-gradient(circle, transparent 50%, rgba(59,53,96,.35)); }
+  #banner #bannerTxt{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); background:transparent; border:0; box-shadow:none; -webkit-text-stroke:0; animation:none; }
+  #banner #bannerTxt small{ color:var(--lp-gold); font-family:'Josefin Sans', sans-serif; letter-spacing:.2em; text-transform:uppercase; }
+  #banner button{ border:0; box-shadow:none; border-radius:3px; background:rgba(255,246,236,.92); color:var(--lp-ink); }
+  .xpc{ background:linear-gradient(160deg,#8f84c8,#e8b0c6 70%,#f6c6b1); color:var(--lp-cream); border:0; border-radius:4px; box-shadow:0 12px 30px rgba(59,53,96,.3); }
+  .xpc .pLv{ font-family:'Josefin Sans', sans-serif; font-weight:700; color:var(--lp-cream); -webkit-text-stroke:0; }
+  .xpc .pBar{ border:0; border-radius:0; background:rgba(255,246,236,.2); } .xpc .pBar i{ background:var(--lp-gold); }
+  .xpc .hint, .xpc .smallLbl{ color:rgba(255,246,236,.8); }
+  .xpc .pbs div{ border:0; border-radius:3px; background:rgba(255,246,236,.14); } .xpc .pbs small{ color:rgba(255,246,236,.75); }
+  .xpc .badges{ gap:4px; } .xpc .badges span{ display:none; } .xpc .bdgw{ display:flex; flex-direction:column; align-items:center; width:62px; font-size:9px; text-align:center; line-height:1.2; }
+</style>
+</head>
+<body>
+
+<header id="top">
+  <button id="brandBtn" aria-label="ErgCoach">%%LOGO_BTN%%</button>
+  <div class="ttl mono">
+    <div class="name">ErgCoach</div>
+    <div class="state" id="pmState"><span class="dot" id="pmDot"></span><span id="pmTxt">PM5 not connected</span></div>
+  </div>
+</header>
+
+<main class="mono">
+
+<!-- CONNECT -->
+<section id="v-con">
+  <div class="panel" id="teamPane"></div>
+  <div class="panel">
+    <h2>Concept2 PM5</h2>
+    <div id="btWarn"></div>
+    <div class="btnRow"><button class="solid" id="btnConnect">Connect PM5</button></div>
+    <div class="btnRow"><button id="btnDemo">Try demo rowing</button><button id="btnHr">Heart rate strap</button></div>
+    <div class="seg hidden" id="demoSeg" style="margin-top:8px;flex-wrap:wrap">
+      <button data-d="good" class="active">Good</button><button data-d="soft">Soft catch</button><button data-d="late">Late peak</button><button data-d="hump">Two humps</button><button data-d="spike">Early spike</button>
+    </div>
+    <p class="status" id="conStatus"></p>
+    <p class="hint">Wake the PM5 (press a button or take a stroke), close ErgData if it is connected, then tap <b>Connect PM5</b> and pick <b>PM5 …</b> with your serial number. The force curve comes from the PM5 itself, stroke by stroke.</p>
+  </div>
+  <div class="panel">
+    <h2>You</h2>
+    <div class="field"><div class="fl">Height</div><input type="number" id="pHgt" inputmode="decimal"><div class="fu">cm</div></div>
+    <div class="field"><div class="fl">Weight</div><input type="number" id="pWgt" inputmode="decimal"><div class="fu">kg</div></div>
+    <div class="field"><div class="fl">Sex<small>for the level bands</small></div><select id="pSex"><option value="">–</option><option value="m">Male</option><option value="f">Female</option></select></div>
+    <div class="field"><div class="fl">Year of birth<small>estimates max HR if you have not tested it</small></div><input type="number" id="pBy" inputmode="numeric"><div class="fu"></div></div>
+    <div class="field"><div class="fl">Max heart rate<small>highest you have seen in a hard test</small></div><input type="number" id="pMax" inputmode="numeric"><div class="fu">bpm</div></div>
+    <div class="field"><div class="fl">Resting heart rate<small>lying down, just after waking</small></div><input type="number" id="pRest" inputmode="numeric"><div class="fu">bpm</div></div>
+    <div id="zoneBox"></div>
+    <p class="hint">Height is used to judge drive length and to scale the video analysis to metres.</p>
+  </div>
+</section>
+
+<!-- LIVE -->
+<section id="v-live" class="hidden">
+  <div class="panel">
+    <div class="paceLbl">Pace /500 m</div>
+    <div class="paceBig" id="lPace">–:––</div>
+    <div class="big3" style="margin-top:8px">
+      <div><div class="v" id="lRate">–</div><div class="l">s/m</div></div>
+      <div><div class="v" id="lWatt">–</div><div class="l">watts</div></div>
+      <div><div class="v" id="lDist">–</div><div class="l">metres</div></div>
+    </div>
+    <div class="hrRow" id="lHrRow"><div class="hrV"><span id="lHr">–</span><small>bpm</small></div><div class="hrZ" id="lZone">no heart rate</div></div>
+    <div class="liveTeam" id="lTeam"></div>
+  </div>
+  <div class="panel">
+    <h2>Force curve · <span id="lStroke">0 strokes</span></h2>
+    <div id="lChart"></div>
+    <div class="legend"><span><i style="background:#FD08FF;height:4px"></i>last stroke</span><span><i style="background:#c8c8c8"></i>previous</span><span><i style="background:repeating-linear-gradient(90deg,#2e2e2e 0 4px,transparent 4px 7px)"></i>target shape</span></div>
+    <div class="chips" id="lChips"></div>
+  </div>
+  <div class="btnRow"><button id="btnLiveTech">Technique →</button><button id="btnSave">Stop &amp; save</button></div>
+</section>
+
+<!-- TECHNIQUE -->
+<section id="v-tech" class="hidden">
+  <div class="panel" id="techPane"></div>
+</section>
+
+<!-- VIDEO -->
+<section id="v-video" class="hidden">
+  <div class="panel">
+    <h2>Video analysis</h2>
+    <div class="vwrap" id="vwrap"><div class="empty" id="vEmpty">Film from the side, level with the seat, 3–4 m away. The whole body and the handle should be in view for the full stroke.</div><video id="vid" playsinline muted preload="auto" class="hidden"></video><canvas id="vcan"></canvas></div>
+    <div class="vbar" id="vSrcBar"><button id="vRec">● Record</button><button id="vLoad">Load video</button><input type="file" id="vFile" accept="video/*" class="hidden"></div>
+    <div class="vbar hidden" id="vRecBar"><button class="solid" id="vStop"><span class="recDot"></span>Stop</button></div>
+    <div class="hidden" id="vAnaBar"><div class="btnRow"><button class="solid" id="vAnalyse">Find joints &amp; analyse</button></div><div class="prog"><i id="vProg"></i></div></div>
+    <p class="status" id="vStatus"></p>
+    <div class="hidden" id="vPlay">
+      <input type="range" class="scrub" id="vScrub" min="0" max="1000" value="0">
+      <div class="vt"><span id="vT">0.00 s</span><span id="vPhase"></span></div>
+      <div class="vbar"><button id="vPrevC">◀ Catch</button><button id="vBack">−1</button><button id="vPP">Play</button><button id="vFwd">+1</button><button id="vNextC">Catch ▶</button></div>
+      <div class="vbar" id="vSpeed"><button data-s="0.25">¼×</button><button data-s="0.5" class="active">½×</button><button data-s="1">1×</button><button id="vOv" class="active">Lines</button></div>
+    </div>
+  </div>
+  <div class="panel hidden" id="vSyncPanel">
+    <h2>Force curve at this stroke</h2>
+    <div id="vForce"></div>
+    <div class="legend"><span><i style="background:#FD08FF;height:4px"></i>PM5 force</span><span><i style="background:#2e2e2e"></i>handle speed (video)</span></div>
+    <div class="field"><div class="fl">PM5 sync offset<small id="vSyncInfo"></small></div><input type="number" id="vOffset" step="0.1" value="0"><div class="fu">s</div></div>
+    <div class="btnRow"><button id="vAutoSync">Auto-align with PM5</button></div>
+  </div>
+  <div class="panel hidden" id="vResult"></div>
+</section>
+
+<!-- LOG -->
+<section id="v-log" class="hidden">
+  <div class="panel" id="logPane"></div>
+</section>
+
+</main>
+
+<nav id="tabs" class="mono">
+  <button data-v="con" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7l10 10-5 5V2l5 5L7 17"/></svg>PM5</button>
+  <button data-v="live"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><path d="M2 18 C6 18 7 5 11 5 S15 14 22 18"/></svg>Live</button>
+  <button data-v="tech"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Technique</button>
+  <button data-v="video"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linejoin="round"><rect x="2" y="6" width="14" height="12" rx="2"/><path d="M16 10l6-3v10l-6-3z"/></svg>Video</button>
+  <button data-v="log"><svg viewBox="0 0 24 24" fill="none" stroke="#2e2e2e" stroke-width="2" stroke-linecap="round"><path d="M5 4h14v16H5zM9 9h6M9 13h6M9 17h3"/></svg>Diary</button>
+</nav>
+
+<div id="toast" class="mono"></div>
+<div id="sess" class="hidden"><button id="sessX">✕</button><div id="sessIn"></div></div>
+<div id="banner" class="mono hidden"><div id="bannerTxt"></div><button id="bannerX">OK</button></div>
